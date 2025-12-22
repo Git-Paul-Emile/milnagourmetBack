@@ -1,0 +1,501 @@
+// Schéma Prisma pour Milna Gourmet - Version avec IDs Auto-incrémentés
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+// ============================================
+// UTILISATEURS ET AUTHENTIFICATION
+// ============================================
+
+model Utilisateur {
+  id             Int              @id @default(autoincrement())
+  telephone      String           @unique
+  nomComplet     String
+  blocked        Boolean          @default(false)
+  password       String
+  tokenVersion   Int              @default(0)
+  role           String?          @default("USER")
+  zoneLivraisonId Int?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  commandes     Commande[]
+  paniers       Panier[]
+  zoneLivraison ZoneLivraison?    @relation(fields: [zoneLivraisonId], references: [id])
+
+  @@map("users")
+}
+
+// ============================================
+// PANIERS
+// ============================================
+
+model Panier {
+  id            Int      @id @default(autoincrement())
+  utilisateurId Int
+  creeLe        DateTime @default(now())
+  modifieLe     DateTime @updatedAt
+
+  utilisateur Utilisateur    @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  elements    ElementPanier[]
+  creations   CreationPanier[]
+
+  @@map("carts")
+}
+
+model ElementPanier {
+  id       Int @id @default(autoincrement())
+  panierId Int
+  produitId Int
+  quantite Int
+  prix     Int
+
+  panier  Panier  @relation(fields: [panierId], references: [id], onDelete: Cascade)
+  produit Produit @relation(fields: [produitId], references: [id])
+
+  @@map("cart_items")
+}
+
+// Créations personnalisées dans le panier
+model CreationPanier {
+  id         Int @id @default(autoincrement())
+  panierId   Int
+  tailleId   Int
+  quantite   Int @default(1)
+  prix       Int
+  fruits     String? // JSON string des fruits sélectionnés
+  sauces     String? // JSON string des sauces sélectionnées
+  cereales   String? // JSON string des céréales sélectionnées
+
+  panier Panier    @relation(fields: [panierId], references: [id], onDelete: Cascade)
+  taille TailleCreation @relation(fields: [tailleId], references: [id])
+
+  @@map("cart_creations")
+}
+
+
+// ============================================
+// PRODUITS
+// ============================================
+
+model Produit {
+  id          Int              @id @default(autoincrement())
+  nom         String
+  categorie   CategorieProduit
+  categorieId Int?
+  prix        Int
+  description String?
+  image       String?
+  disponible  Boolean          @default(true)
+  creeLe      DateTime         @default(now())
+  modifieLe   DateTime         @updatedAt
+
+  elementsCommande ElementCommande[]
+  elementsPanier   ElementPanier[]
+  categorieProduit CategorieProduitItem? @relation(fields: [categorieId], references: [id])
+
+  @@map("products")
+}
+
+enum CategorieProduit {
+  CREMEUX
+  LIQUIDE
+  CREATION
+}
+
+model CategorieProduitItem {
+  id          Int     @id @default(autoincrement())
+  nom         String
+  description String?
+  active      Boolean @default(true)
+  creeLe      DateTime @default(now())
+  modifieLe   DateTime @updatedAt
+
+  produits Produit[]
+  traductions TraductionCategorie[]
+
+  @@map("product_categories")
+}
+
+// Traductions des catégories de produits
+model TraductionCategorie {
+  id                Int      @id @default(autoincrement())
+  categorieId       Int
+  code              String   // Code de la catégorie (cremeux, liquide, creation)
+  libelleFr         String   // Libellé en français
+  creeLe            DateTime @default(now())
+  modifieLe         DateTime @updatedAt
+
+  categorie CategorieProduitItem @relation(fields: [categorieId], references: [id], onDelete: Cascade)
+
+  @@unique([categorieId, code])
+  @@map("category_translations")
+}
+
+
+// ============================================
+// COMMANDES
+// ============================================
+
+model Commande {
+   id              Int            @id @default(autoincrement())
+   numeroCommande  String         @unique @default(cuid())
+   utilisateurId   Int?
+   nomClient       String
+   telephoneClient String
+   statut          StatutCommande @default(RECU)
+   montantTotal    Int
+   fraisLivraison  Int            @default(0)
+   notes           String?
+   creeLe          DateTime       @default(now())
+   modifieLe       DateTime       @updatedAt
+
+  utilisateur             Utilisateur?            @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  elements                ElementCommande[]
+  creationsPersonnalisees CreationPersonnalisee[]
+  livreur                 Livreur?                @relation(fields: [livreurId], references: [id])
+  livreurId               Int?
+
+  @@map("orders")
+}
+
+enum StatutCommande {
+  RECU
+  EN_PREPARATION
+  LIVRAISON
+  LIVREE
+}
+
+// Configuration des statuts de commande (traductions, couleurs, icônes)
+model ConfigurationStatut {
+  id            Int      @id @default(autoincrement())
+  statut        StatutCommande @unique
+  libelleFr     String
+  couleurBg     String   // Classe CSS pour le background
+  couleurText   String   // Classe CSS pour le texte
+  icone         String?  // Nom de l'icône
+  ordre         Int      @default(0)
+  creeLe        DateTime @default(now())
+  modifieLe     DateTime @updatedAt
+
+  @@map("order_status_config")
+}
+
+model ElementCommande {
+  id         Int @id @default(autoincrement())
+  commandeId Int
+  produitId  Int
+  quantite   Int
+  prix       Int
+
+  commande Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+  produit  Produit  @relation(fields: [produitId], references: [id])
+
+  @@map("order_items")
+}
+
+// ============================================
+// CRÉATIONS PERSONNALISÉES
+// ============================================
+
+model CreationPersonnalisee {
+  id         Int @id @default(autoincrement())
+  commandeId Int
+  tailleId   Int
+  quantite   Int @default(1)
+  prix       Int
+
+  commande Commande          @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+  taille   TailleCreation    @relation(fields: [tailleId], references: [id])
+  fruits   FruitCreation[]
+  sauces   SauceCreation[]
+  cereales CerealeCreation[]
+
+  @@map("custom_creations")
+}
+
+// Table de liaison : Fruits dans une création
+model FruitCreation {
+  id                      Int @id @default(autoincrement())
+  creationPersonnaliseeId Int
+  fruitId                 Int
+
+  creation CreationPersonnalisee @relation(fields: [creationPersonnaliseeId], references: [id], onDelete: Cascade)
+  fruit    Fruit                 @relation(fields: [fruitId], references: [id])
+
+  @@map("creation_fruits")
+}
+
+// Table de liaison : Sauces dans une création
+model SauceCreation {
+  id                      Int @id @default(autoincrement())
+  creationPersonnaliseeId Int
+  sauceId                 Int
+
+  creation CreationPersonnalisee @relation(fields: [creationPersonnaliseeId], references: [id], onDelete: Cascade)
+  sauce    Sauce                 @relation(fields: [sauceId], references: [id])
+
+  @@map("creation_sauces")
+}
+
+// Table de liaison : Céréales dans une création
+model CerealeCreation {
+  id                      Int @id @default(autoincrement())
+  creationPersonnaliseeId Int
+  cerealeId               Int
+
+  creation CreationPersonnalisee @relation(fields: [creationPersonnaliseeId], references: [id], onDelete: Cascade)
+  cereale  Cereale               @relation(fields: [cerealeId], references: [id])
+
+  @@map("creation_cereales")
+}
+
+// ============================================
+// OPTIONS DE CRÉATION (Ingrédients)
+// ============================================
+
+model Fruit {
+  id             Int      @id @default(autoincrement())
+  nom            String   @unique
+  image          String?
+  disponible     Boolean  @default(true)
+  ordreAffichage Int      @default(0)
+  creeLe         DateTime @default(now())
+
+  creations FruitCreation[]
+
+  @@map("fruits")
+}
+
+model Sauce {
+  id             Int      @id @default(autoincrement())
+  nom            String   @unique
+  image          String?
+  disponible     Boolean  @default(true)
+  ordreAffichage Int      @default(0)
+  creeLe         DateTime @default(now())
+
+  creations SauceCreation[]
+
+  @@map("sauces")
+}
+
+model Cereale {
+  id             Int      @id @default(autoincrement())
+  nom            String   @unique
+  image          String?
+  disponible     Boolean  @default(true)
+  ordreAffichage Int      @default(0)
+  creeLe         DateTime @default(now())
+
+  creations CerealeCreation[]
+
+  @@map("cereales")
+}
+
+// Tailles pour les créations personnalisées
+model TailleCreation {
+  id               Int     @id @default(autoincrement())
+  nom              String  @unique
+  prix             Int
+  maxFruits        Int
+  maxSauces        Int
+  cerealesAutorise Boolean @default(false)
+  active           Boolean @default(true)
+  ordreAffichage   Int     @default(0)
+
+  creations CreationPersonnalisee[]
+  creationsPanier CreationPanier[]
+  traductions TraductionTaille[]
+
+  @@map("creation_sizes")
+}
+
+// Traductions des tailles de création
+model TraductionTaille {
+  id                Int      @id @default(autoincrement())
+  tailleId          Int
+  code              String   // Code de la taille (moyen, maxi, etc.)
+  libelleFr         String   // Libellé en français
+  creeLe            DateTime @default(now())
+  modifieLe         DateTime @updatedAt
+
+  taille TailleCreation @relation(fields: [tailleId], references: [id], onDelete: Cascade)
+
+  @@unique([tailleId, code])
+  @@map("size_translations")
+}
+
+// ============================================
+// LIVRAISON
+// ============================================
+
+model ZoneLivraison {
+  id             Int      @id @default(autoincrement())
+  nom            String
+  fraisLivraison Int
+  tempsEstime    String
+  active         Boolean  @default(true)
+  creeLe         DateTime @default(now())
+
+  utilisateurs Utilisateur[]
+
+  @@map("delivery_zones")
+}
+
+
+model Livreur {
+  id              Int      @id @default(autoincrement())
+  nomComplet      String
+  telephone       String
+  vehicule        String
+  active          Boolean  @default(true)
+  creeLe          DateTime @default(now())
+
+  commandes Commande[]
+
+  @@map("delivery_persons")
+}
+
+
+model Temoinage {
+  id          Int      @id @default(autoincrement())
+  nom         String
+  lieu        String
+  note        Int
+  commentaire String   @db.Text
+  avatar      String?  @db.LongText
+  date        DateTime
+  active      Boolean  @default(true)
+
+  @@map("testimonials")
+}
+
+model Contact {
+  id           Int      @id @default(autoincrement())
+  nomEntreprise String
+  adresse      String
+  telephone    String
+  email        String
+  whatsapp     String
+  modifieLe    DateTime @updatedAt
+
+  horaires HoraireOuverture[]
+
+  @@map("contact")
+}
+
+model HoraireOuverture {
+  id        Int     @id @default(autoincrement())
+  contactId Int
+  jour      String
+  ouverture String?
+  fermeture String?
+  ferme     Boolean @default(false)
+  ordre     Int     @default(0)
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, jour])
+  @@map("opening_hours")
+}
+
+model ReseauSocial {
+  id         Int      @id @default(autoincrement())
+  plateforme String   @unique
+  url        String
+  active     Boolean  @default(true)
+  modifieLe  DateTime @updatedAt
+
+  @@map("social_media")
+}
+
+model Marque {
+   id        Int      @id @default(autoincrement())
+   logo      String
+   modifieLe DateTime @updatedAt
+
+   @@map("branding")
+}
+
+model AvatarToast {
+   id        Int      @id @default(autoincrement())
+   image     String
+   modifieLe DateTime @updatedAt
+
+   @@map("avatar_toast")
+}
+
+model SectionHero {
+  id          Int      @id @default(autoincrement())
+  banner      String?  // URL de l'image de fond de la section hero
+  modifieLe   DateTime @updatedAt
+
+  caracteristiques CaracteristiqueHero[]
+
+  @@map("hero_section")
+}
+
+model CaracteristiqueHero {
+  id         Int         @id @default(autoincrement())
+  heroId     Int
+  titre      String
+  description String     @db.Text
+  ordre      Int         @default(0)
+
+  hero SectionHero @relation(fields: [heroId], references: [id], onDelete: Cascade)
+
+  @@map("hero_features")
+}
+
+model SectionCatalogue {
+  id                    Int      @id @default(autoincrement())
+  titre                 String
+  description           String   @db.Text
+  titreCreation         String
+  descriptionCreation   String   @db.Text
+  boutonCreation        String
+  imageCreation         String?
+  messageVide           String
+  messageVideSecondaire String
+  modifieLe             DateTime @updatedAt
+
+  @@map("catalog_section")
+}
+
+model Navigation {
+  id        Int      @id @default(autoincrement())
+  nom       String
+  href      String
+  ordre     Int      @default(0)
+  active    Boolean  @default(true)
+  modifieLe DateTime @updatedAt
+
+  @@map("navigation")
+}
+
+// ============================================
+// THÈMES ET CHARTES GRAPHIQUES
+// ============================================
+
+model Theme {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  lightColors Json     // Objet avec toutes les variables CSS pour le mode clair
+  darkColors  Json?    // Objet avec toutes les variables CSS pour le mode sombre (optionnel)
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("themes")
+}
+
+
