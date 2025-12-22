@@ -37,7 +37,7 @@ class CartController {
                         ].filter(Boolean).join(' • ') || 'Création personnalisée',
                         price: creation.prix,
                         quantity: creation.quantite,
-                        image: '/src/assets/yogurt-creation.jpg',
+                        image: '/uploads/creation/yogurt-creation.jpg',
                         customCreation: {
                             size: creation.taille,
                             selectedFruits: creation.fruits ? JSON.parse(creation.fruits) : [],
