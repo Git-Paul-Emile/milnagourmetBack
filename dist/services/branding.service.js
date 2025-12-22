@@ -20,8 +20,8 @@ class BrandingService {
             }
             // Vérifier s'il y a un logo personnalisé dans la base de données
             const branding = await prisma.marque.findFirst();
-            if (branding && branding.logo && branding.logo.startsWith('/uploads/logos/')) {
-                // Si c'est un logo uploadé personnalisé, l'utiliser
+            if (branding && branding.logo && branding.logo.startsWith('/uploads/logos/') && branding.logo !== '/uploads/logos/milna-logo.png') {
+                // Si c'est un logo uploadé personnalisé (différent du logo classique par défaut), l'utiliser
                 logo = branding.logo;
             }
             return {
