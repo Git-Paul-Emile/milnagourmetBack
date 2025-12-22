@@ -13,7 +13,7 @@ class TemoinageService {
                 location: testimonial.lieu,
                 rating: testimonial.note,
                 comment: testimonial.commentaire,
-                avatar: testimonial.avatar,
+                avatar: testimonial.avatar && testimonial.avatar.startsWith('/uploads/') ? `https://milnagourmetback.onrender.com${testimonial.avatar}` : testimonial.avatar,
                 date: testimonial.date.toISOString().split('T')[0], // Format YYYY-MM-DD
                 active: includeInactive ? testimonial.active : undefined
             }));

@@ -22,6 +22,12 @@ class ProductService {
             console.log(`${products.length} produits récupérés`);
             // Transformer les données pour correspondre à l'interface front-end
             const transformedProducts = products.map(product => this.transformProduct(product));
+            // Préfixer les URLs d'images
+            transformedProducts.forEach(product => {
+                if (product.image && product.image.startsWith('/uploads/')) {
+                    product.image = `https://milnagourmetback.onrender.com${product.image}`;
+                }
+            });
             return transformedProducts;
         }
         catch (error) {
