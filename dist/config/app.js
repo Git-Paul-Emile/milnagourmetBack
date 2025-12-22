@@ -26,7 +26,8 @@ const app = express();
 const allowedOrigins = [
     process.env.FRONT_URL || 'http://localhost:8080',
     'http://localhost:5173', // Vite default
-    'http://localhost:8081'
+    'http://localhost:8081',
+    'https://milnagourmet-front.vercel.app' // URL de production Vercel
 ];
 const corsOptions = {
     origin: (origin, callback) => {
