@@ -18,7 +18,7 @@ class HeroService {
                 subtitle: "Votre Salon du Yaourt pour des gourmets délicieusement fait maison. Découvrez notre menu dans le catalogue et savourez l'excellence à chaque cuillerée.",
                 badge: "Le Salon du Yaourt Premium",
                 banner: hero.banner,
-                features: hero.caracteristiques.map(feature => ({
+                features: hero.caracteristiques.map((feature) => ({
                     title: feature.titre,
                     description: feature.description
                 }))
@@ -52,7 +52,7 @@ class HeroService {
                 subtitle: "Votre Salon du Yaourt pour des gourmets délicieusement fait maison. Découvrez notre menu dans le catalogue et savourez l'excellence à chaque cuillerée.",
                 badge: "Le Salon du Yaourt Premium",
                 banner: updatedHero.banner,
-                features: updatedHero.caracteristiques.map(feature => ({
+                features: updatedHero.caracteristiques.map((feature) => ({
                     title: feature.titre,
                     description: feature.description
                 }))

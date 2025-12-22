@@ -2,7 +2,7 @@ import { Router } from 'express';
 import deliveryPersonController from '../controller/deliveryPerson.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Routes pour les livreurs
 router.get('/', requireAdmin, deliveryPersonController.getAll);

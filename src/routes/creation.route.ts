@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import creationController from '../controller/creation.controller.js';
 
-const router = Router();
+const router: Router = Router();
 
 // ==================== FRUITS ====================
 router.get('/fruits', creationController.getFruits);

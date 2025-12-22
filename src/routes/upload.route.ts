@@ -3,7 +3,7 @@ import uploadController from '../controller/upload.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 import { authenticateToken } from '../utils/auth.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Upload d'une image de produit (ADMIN)
 router.post('/product-image', requireAdmin, uploadController.uploadProductImage);

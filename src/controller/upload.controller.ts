@@ -477,7 +477,7 @@ class UploadController {
       select: { image: true }
     });
     console.log('Produits trouvés:', products);
-    products.forEach(product => {
+    products.forEach((product: any) => {
       if (product.image && product.image.startsWith('/uploads/produits/')) {
         usedImages.push(product.image);
       }
@@ -498,7 +498,7 @@ class UploadController {
       select: { avatar: true }
     });
     console.log('Témoignages actifs trouvés:', testimonials);
-    testimonials.forEach(testimonial => {
+    testimonials.forEach((testimonial: any) => {
       if (testimonial.avatar && testimonial.avatar.startsWith('/uploads/')) {
         usedImages.push(testimonial.avatar);
       }
@@ -518,7 +518,7 @@ class UploadController {
       select: { image: true }
     });
     console.log('Fruits trouvés:', fruits);
-    fruits.forEach(fruit => {
+    fruits.forEach((fruit: any) => {
       if (fruit.image && fruit.image.startsWith('/uploads/')) {
         usedImages.push(fruit.image);
       }
@@ -528,7 +528,7 @@ class UploadController {
     const sauces = await prisma.sauce.findMany({
       select: { image: true }
     });
-    sauces.forEach(sauce => {
+    sauces.forEach((sauce: any) => {
       if (sauce.image && sauce.image.startsWith('/uploads/')) {
         usedImages.push(sauce.image);
       }
@@ -538,7 +538,7 @@ class UploadController {
     const cereales = await prisma.cereale.findMany({
       select: { image: true }
     });
-    cereales.forEach(cereale => {
+    cereales.forEach((cereale: any) => {
       if (cereale.image && cereale.image.startsWith('/uploads/')) {
         usedImages.push(cereale.image);
       }

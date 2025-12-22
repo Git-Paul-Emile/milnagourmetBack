@@ -2,7 +2,7 @@ import { Router } from 'express';
 import cartController from '../controller/cart.controller.js';
 import { authenticateToken } from '../utils/auth.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Toutes les routes du panier nécessitent une authentification
 router.use(authenticateToken);

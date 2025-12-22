@@ -2,7 +2,7 @@ import { Router } from 'express';
 import categorieController from '../controller/categorie.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Créer une catégorie (ADMIN)
 router.post('/', requireAdmin, categorieController.create);

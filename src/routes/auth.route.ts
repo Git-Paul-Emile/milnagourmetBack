@@ -2,7 +2,7 @@ import { Router } from 'express';
 import authController from '../controller/auth.controller.js';
 import { authenticateToken } from '../utils/auth.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Inscription d'un nouvel utilisateur
 router.post('/register', authController.register);

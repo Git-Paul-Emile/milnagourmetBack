@@ -2,7 +2,7 @@ import { Router } from 'express';
 import siteController from '../controller/site.controller.js';
 import { authenticateToken } from '../utils/auth.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Routes pour les données du site
 router.get('/branding', siteController.getBranding);

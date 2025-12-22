@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import configController from '../controller/config.controller.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Récupérer toutes les configurations
 router.get('/', configController.getAllConfig);

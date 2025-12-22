@@ -2,7 +2,7 @@ import { Router } from 'express';
 import themeController from '../controller/theme.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Routes publiques (pour récupérer les thèmes actifs)
 router.get('/active', themeController.getActiveTheme);

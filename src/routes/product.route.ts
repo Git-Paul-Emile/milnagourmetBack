@@ -3,7 +3,7 @@ import multer from 'multer';
 import productController from '../controller/product.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Configuration de multer pour parser le FormData (sans sauvegarde de fichier pour la mise à jour)
 const upload = multer();

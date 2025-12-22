@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 // Fonction helper pour adapter une commande au format frontend
 async function adaptOrderToFrontend(order) {
     // Mapper les éléments de commande (produits normaux)
-    const regularItems = (order.elements ?? []).map(element => ({
+    const regularItems = (order.elements ?? []).map((element) => ({
         id: element.produitId.toString(),
         name: element.produit?.nom || '',
         description: element.produit?.description || '',
@@ -25,7 +25,7 @@ async function adaptOrderToFrontend(order) {
         } : undefined
     }));
     // Mapper les créations personnalisées comme des items avec category='creation'
-    const creationItems = (order.creationsPersonnalisees ?? []).map(creation => ({
+    const creationItems = (order.creationsPersonnalisees ?? []).map((creation) => ({
         id: `creation-${creation.id}`,
         name: `Création personnalisée ${creation.taille.nom}`,
         description: '',
@@ -54,9 +54,9 @@ async function adaptOrderToFrontend(order) {
                 ordreAffichage: creation.taille.ordreAffichage || 0,
                 creeLe: creation.taille.creeLe?.toISOString() || new Date().toISOString()
             },
-            selectedFruits: creation.fruits?.map(f => f.fruit.nom) || [],
-            selectedSauces: creation.sauces?.map(s => s.sauce.nom) || [],
-            selectedCereales: creation.cereales?.map(c => c.cereale.nom) || [],
+            selectedFruits: creation.fruits?.map((f) => f.fruit.nom) || [],
+            selectedSauces: creation.sauces?.map((s) => s.sauce.nom) || [],
+            selectedCereales: creation.cereales?.map((c) => c.cereale.nom) || [],
             totalPrice: creation.prix
         }
     }));

@@ -3,7 +3,7 @@ import orderController from '../controller/order.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 import { authenticateToken } from '../utils/auth.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Créer une nouvelle commande
 router.post('/', orderController.create);

@@ -26,7 +26,7 @@ class ContactService {
                 'Samedi': 'saturday',
                 'Dimanche': 'sunday'
             };
-            contact.horaires.forEach(horaire => {
+            contact.horaires.forEach((horaire) => {
                 const dayKey = dayMap[horaire.jour] || horaire.jour.toLowerCase();
                 hours[dayKey] = {
                     open: horaire.ouverture || '',
@@ -102,8 +102,8 @@ class ContactService {
                 // Convertir les horaires pour l'affichage
                 const rawStoreHours = [];
                 contact.horaires
-                    .filter(h => !h.ferme && h.jour)
-                    .forEach(h => {
+                    .filter((h) => !h.ferme && h.jour)
+                    .forEach((h) => {
                     rawStoreHours.push({
                         day: h.jour,
                         hours: h.ouverture && h.fermeture ? `${h.ouverture} - ${h.fermeture}` : 'Fermé'

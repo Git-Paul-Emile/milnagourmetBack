@@ -6,7 +6,7 @@ class DeliveryZoneService {
       const zones = await deliveryZoneRepository.findAll();
 
       // Convertir vers le format attendu par le frontend
-      return zones.map(zone => ({
+      return zones.map((zone: any) => ({
         id: zone.id.toString(),
         name: zone.nom,
         deliveryFee: zone.fraisLivraison,
@@ -24,7 +24,7 @@ class DeliveryZoneService {
       const zones = await deliveryZoneRepository.findAllActive();
 
       // Convertir vers le format attendu par le frontend
-      return zones.map(zone => ({
+      return zones.map((zone: any) => ({
         id: zone.id.toString(),
         name: zone.nom,
         deliveryFee: zone.fraisLivraison,

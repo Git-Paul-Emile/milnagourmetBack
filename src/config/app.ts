@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Application } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
@@ -28,7 +28,7 @@ import { AppError } from "../utils/AppError.js";
 
 
 
-const app = express();
+const app: Application = express();
 
 
 // Configuration CORS

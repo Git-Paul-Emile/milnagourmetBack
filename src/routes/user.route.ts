@@ -2,7 +2,7 @@ import { Router } from 'express';
 import userController from '../controller/user.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Routes pour les utilisateurs
 router.get('/', requireAdmin, userController.getAll);

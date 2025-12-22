@@ -2,7 +2,7 @@ import { Router } from 'express';
 import deliveryZoneController from '../controller/deliveryZone.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Routes pour les zones de livraison
 router.get('/', deliveryZoneController.getAll);

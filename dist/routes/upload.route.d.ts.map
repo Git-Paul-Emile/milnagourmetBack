@@ -1,1 +1,1 @@
-{"version":3,"file":"upload.route.d.ts","sourceRoot":"","sources":["../../src/routes/upload.route.ts"],"names":[],"mappings":"AAKA,QAAA,MAAM,MAAM,4CAAW,CAAC;AAsCxB,eAAe,MAAM,CAAC"}
+{"version":3,"file":"upload.route.d.ts","sourceRoot":"","sources":["../../src/routes/upload.route.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAKjC,QAAA,MAAM,MAAM,EAAE,MAAiB,CAAC;AAsChC,eAAe,MAAM,CAAC"}
