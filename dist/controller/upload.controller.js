@@ -920,6 +920,10 @@ class UploadController {
         try {
             const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
             const allImages = [];
+            // Déterminer l'URL de base pour les images
+            const baseUrl = process.env.NODE_ENV === 'production'
+                ? 'https://milnagourmetback.onrender.com'
+                : `${req.protocol}://${req.get('host')}`;
             // Récupérer les images utilisées
             const usedImages = await this.getUsedImagesList();
             // Fonction helper pour lire les images d'un dossier
@@ -934,6 +938,7 @@ class UploadController {
                 })
                     .map(file => {
                     const imagePath = `${basePath}/${file}`;
+                    const fullImageUrl = `${baseUrl}${imagePath}`;
                     // Créer un label à partir du nom de fichier (sans extension, formaté)
                     const nameWithoutExt = path.basename(file, path.extname(file))
                         .replace(/-/g, ' ')
@@ -943,7 +948,7 @@ class UploadController {
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ') || file;
                     return {
-                        value: imagePath,
+                        value: fullImageUrl,
                         label: nameWithoutExt || file,
                         isUsed: usedImages.includes(imagePath)
                     };
