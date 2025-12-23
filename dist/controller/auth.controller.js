@@ -24,7 +24,7 @@ class AuthController {
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                 maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
             });
             res.status(StatusCodes.CREATED).json(jsonResponse({
@@ -60,7 +60,7 @@ class AuthController {
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                 maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
             });
             res.status(StatusCodes.OK).json(jsonResponse({
@@ -79,6 +79,7 @@ class AuthController {
     // Rafraîchir le token d'accès
     async refresh(req, res, next) {
         try {
+            console.log('[PROD DEBUG] Refresh attempt, refreshToken present:', !!req.cookies.refreshToken);
             const { refreshToken } = req.cookies;
             // Débogage: afficher si cookie de refresh présent et certaines métadonnées (masquer le token complet)
             if (process.env.NODE_ENV !== 'production') {
@@ -99,7 +100,7 @@ class AuthController {
             res.cookie('refreshToken', newRefreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                 maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
             });
             res.status(StatusCodes.OK).json(jsonResponse({
@@ -123,6 +124,7 @@ class AuthController {
             }));
         }
         catch (error) {
+            console.log('[PROD DEBUG] Refresh error:', error.message);
             next(error);
         }
     }
