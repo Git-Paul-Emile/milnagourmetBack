@@ -7,33 +7,33 @@ import { verifyRefreshToken } from '../config/jwt.js';
 import type { RegisterInput, LoginInput } from '../validator/auth.schema.js';
 import type { Utilisateur } from '@prisma/client';
 
+// Helper function to adapt user data for frontend with zone name
+async function adaptUserForFrontend(user: Utilisateur) {
+  let zoneLivraison = null;
+  if (user.zoneLivraisonId) {
+    try {
+      const zone = await deliveryZoneService.getDeliveryZoneById(user.zoneLivraisonId);
+      zoneLivraison = zone.name;
+    } catch (error) {
+      console.warn(`Could not fetch delivery zone for user ${user.id}:`, error);
+      zoneLivraison = null;
+    }
+  }
+
+  return {
+    id: user.id,
+    nomComplet: user.nomComplet,
+    telephone: user.telephone,
+    zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
+    zoneLivraison,
+    role: user.role || 'USER',
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString()
+  };
+}
+
 class AuthController {
   private authService = authService;
-
-  // Helper function to adapt user data for frontend with zone name
-  private adaptUserForFrontend = async (user: Utilisateur) => {
-    let zoneLivraison = null;
-    if (user.zoneLivraisonId) {
-      try {
-        const zone = await deliveryZoneService.getDeliveryZoneById(user.zoneLivraisonId);
-        zoneLivraison = zone.name;
-      } catch (error) {
-        console.warn(`Could not fetch delivery zone for user ${user.id}:`, error);
-        zoneLivraison = null;
-      }
-    }
-
-    return {
-      id: user.id,
-      nomComplet: user.nomComplet,
-      telephone: user.telephone,
-      zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
-      zoneLivraison,
-      role: user.role || 'USER',
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString()
-    };
-  }
 
   // Inscription d'un nouvel utilisateur
   async register(req: Request, res: Response, next: NextFunction) {
@@ -42,7 +42,7 @@ class AuthController {
       const { user, accessToken, refreshToken } = await authService.register(userData);
 
       // Adapter les données pour le frontend
-      const adaptedUser = await this.adaptUserForFrontend(user);
+      const adaptedUser = await adaptUserForFrontend(user);
 
       // Définir le refresh token dans un cookie httpOnly
       res.cookie('refreshToken', refreshToken, {
@@ -74,7 +74,7 @@ class AuthController {
       const { user, accessToken, refreshToken } = await authService.login(loginData);
 
       // Adapter les données pour le frontend
-      const adaptedUser = await this.adaptUserForFrontend(user);
+      const adaptedUser = await adaptUserForFrontend(user);
 
       // Définir le refresh token dans un cookie httpOnly
       res.cookie('refreshToken', refreshToken, {
@@ -201,7 +201,7 @@ class AuthController {
       }
 
       // Adapter les données pour le frontend
-      const adaptedUser = await this.adaptUserForFrontend(user);
+      const adaptedUser = await adaptUserForFrontend(user);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -233,7 +233,7 @@ class AuthController {
       }
 
       // Adapter les données pour le frontend
-      const adaptedUser = await this.adaptUserForFrontend(user);
+      const adaptedUser = await adaptUserForFrontend(user);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({

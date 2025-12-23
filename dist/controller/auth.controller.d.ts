@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 declare class AuthController {
     private authService;
-    private adaptUserForFrontend;
     register(req: Request, res: Response, next: NextFunction): Promise<void>;
     login(req: Request, res: Response, next: NextFunction): Promise<void>;
     refresh(req: Request, res: Response, next: NextFunction): Promise<void>;
