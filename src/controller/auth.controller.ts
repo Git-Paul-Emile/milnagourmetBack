@@ -1,12 +1,39 @@
 import type { Request, Response, NextFunction } from 'express';
 import authService from '../services/auth.service.js';
+import deliveryZoneService from '../services/deliveryZone.service.js';
 import { jsonResponse, AppError } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { verifyRefreshToken } from '../config/jwt.js';
 import type { RegisterInput, LoginInput } from '../validator/auth.schema.js';
+import type { Utilisateur } from '@prisma/client';
 
 class AuthController {
   private authService = authService;
+
+  // Helper function to adapt user data for frontend with zone name
+  private async adaptUserForFrontend(user: Utilisateur) {
+    let zoneLivraison = null;
+    if (user.zoneLivraisonId) {
+      try {
+        const zone = await deliveryZoneService.getDeliveryZoneById(user.zoneLivraisonId);
+        zoneLivraison = zone.name;
+      } catch (error) {
+        console.warn(`Could not fetch delivery zone for user ${user.id}:`, error);
+        zoneLivraison = null;
+      }
+    }
+
+    return {
+      id: user.id,
+      nomComplet: user.nomComplet,
+      telephone: user.telephone,
+      zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
+      zoneLivraison,
+      role: user.role || 'USER',
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString()
+    };
+  }
 
   // Inscription d'un nouvel utilisateur
   async register(req: Request, res: Response, next: NextFunction) {
@@ -15,16 +42,7 @@ class AuthController {
       const { user, accessToken, refreshToken } = await authService.register(userData);
 
       // Adapter les données pour le frontend
-      const adaptedUser = {
-        id: user.id,
-        nomComplet: user.nomComplet,
-        telephone: user.telephone,
-        zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
-        zoneLivraison: null, // TODO: fetch zone name separately if needed
-        role: user.role || 'USER',
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString()
-      };
+      const adaptedUser = await this.adaptUserForFrontend(user);
 
       // Définir le refresh token dans un cookie httpOnly
       res.cookie('refreshToken', refreshToken, {
@@ -56,16 +74,7 @@ class AuthController {
       const { user, accessToken, refreshToken } = await authService.login(loginData);
 
       // Adapter les données pour le frontend
-      const adaptedUser = {
-        id: user.id,
-        nomComplet: user.nomComplet,
-        telephone: user.telephone,
-        zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
-        zoneLivraison: null, // TODO: fetch zone name separately if needed
-        role: user.role || 'USER',
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString()
-      };
+      const adaptedUser = await this.adaptUserForFrontend(user);
 
       // Définir le refresh token dans un cookie httpOnly
       res.cookie('refreshToken', refreshToken, {
@@ -192,16 +201,7 @@ class AuthController {
       }
 
       // Adapter les données pour le frontend
-      const adaptedUser = {
-        id: user.id,
-        nomComplet: user.nomComplet,
-        telephone: user.telephone,
-        zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
-        zoneLivraison: null, // TODO: fetch zone name separately if needed
-        role: user.role || 'USER',
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString()
-      };
+      const adaptedUser = await this.adaptUserForFrontend(user);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -233,16 +233,7 @@ class AuthController {
       }
 
       // Adapter les données pour le frontend
-      const adaptedUser = {
-        id: user.id,
-        nomComplet: user.nomComplet,
-        telephone: user.telephone,
-        zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
-        zoneLivraison: null, // TODO: fetch zone name separately if needed
-        role: user.role || 'USER',
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString()
-      };
+      const adaptedUser = await this.adaptUserForFrontend(user);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
