@@ -6,7 +6,7 @@ import { verifyRefreshToken } from '../config/jwt.js';
 class AuthController {
     authService = authService;
     // Helper function to adapt user data for frontend with zone name
-    async adaptUserForFrontend(user) {
+    adaptUserForFrontend = async (user) => {
         let zoneLivraison = null;
         if (user.zoneLivraisonId) {
             try {
@@ -28,7 +28,7 @@ class AuthController {
             createdAt: user.createdAt.toISOString(),
             updatedAt: user.updatedAt.toISOString()
         };
-    }
+    };
     // Inscription d'un nouvel utilisateur
     async register(req, res, next) {
         try {

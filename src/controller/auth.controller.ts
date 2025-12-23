@@ -11,7 +11,7 @@ class AuthController {
   private authService = authService;
 
   // Helper function to adapt user data for frontend with zone name
-  private async adaptUserForFrontend(user: Utilisateur) {
+  private adaptUserForFrontend = async (user: Utilisateur) => {
     let zoneLivraison = null;
     if (user.zoneLivraisonId) {
       try {
