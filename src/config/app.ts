@@ -16,6 +16,7 @@ import configRoute from "../routes/config.route.js";
 import userRoute from "../routes/user.route.js";
 import uploadRoute from "../routes/upload.route.js";
 import themeRoute from "../routes/theme.route.js";
+import healthRoute from "../routes/health.route.js";
 
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from '../swagger.js';
@@ -80,6 +81,7 @@ app.use('/api/config', configRoute);
 app.use('/api/users', userRoute);
 app.use('/api/upload', uploadRoute);
 app.use('/api/themes', themeRoute);
+app.use('/api/health', healthRoute);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
