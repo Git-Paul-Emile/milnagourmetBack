@@ -238,7 +238,7 @@ class OrderController {
       console.log('[ORDER CREATION] Commande créée avec succès, ID:', order.id);
 
       // Envoi asynchrone de la notification WhatsApp au vendeur
-      WhatsAppService.sendOrderNotification(dbOrderData).catch((error: any) => console.error('Erreur WhatsApp ignorée :', error));
+      WhatsAppService.sendOrderNotification(order).catch((error: any) => console.error('Erreur WhatsApp ignorée :', error));
 
       // Vider le panier de l'utilisateur après la création de la commande
       if (dbOrderData.utilisateurId) {
