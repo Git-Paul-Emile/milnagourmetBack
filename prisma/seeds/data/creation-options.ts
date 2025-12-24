@@ -18,35 +18,14 @@ export const creationSizesData = [
 export const creationOptionsData = {
   "fruits": [
     "Fraise",
-    "Banane",
     "Mangue",
-    "Ananas",
     "Kiwi",
-    "Passion",
-    "Pomme",
-    "Poire",
     "Raisin",
-    "Orange",
-    "Citron",
-    "Myrtille"
   ],
   "sauces": [
-    "Caramel",
-    "Chocolat",
-    "Miel",
-    "Confiture de fraise",
-    "Confiture d'abricot",
-    "Nutella",
-    "Sirop d'érable",
-    "Coulis de fruits"
+    "Abricot",
+    "Cérise",
+    "Miel"
   ],
-  "cereales": [
-    "Granola",
-    "Flocons d'avoine",
-    "Céréales au miel",
-    "Muesli",
-    "Pépites de chocolat",
-    "Noix concassées",
-    "Amandes effilées"
-  ]
+  "cereales": []
 };

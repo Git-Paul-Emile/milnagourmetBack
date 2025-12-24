@@ -65,24 +65,5 @@ export const productsData = [
     "image": "/uploads/produits/yogurt-liquid.jpg",
     "available": true
   },
-  {
-    "id": "cremeux-chocolat",
-    "name": "Gourmet Chocolat",
-    "category": "cremeux",
-    "price": 1200,
-    "description": "Yaourt crémeux au chocolat noir intense, pour les amateurs de saveurs riches.",
-    "image": "/uploads/produits/yogurt-nature.jpg",
-    "available": false,
-    "archived": false
-  },
-  {
-    "id": "liquide-mangue",
-    "name": "Gourmet Mangue",
-    "category": "liquide",
-    "price": 2800,
-    "description": "Yaourt liquide à la mangue fraîche du Gabon, explosion de saveurs exotiques.",
-    "image": "/uploads/produits/yogurt-liquid.jpg",
-    "available": true,
-    "archived": false
-  }
+ 
 ];

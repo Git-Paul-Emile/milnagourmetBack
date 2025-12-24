@@ -1,8 +1,8 @@
 export const testimonialsData = [
   {
     "id": 1,
-    "name": "Fatou Diop",
-    "location": "Dakar",
+    "name": "Jolie",
+    "location": "Libreville",
     "rating": 5,
     "comment": "Les meilleurs yaourts de Dakar ! La qualité est exceptionnelle et les saveurs sont uniques. Je recommande vivement Milna Gourmet.",
     "avatar": "/uploads/temoignages/milna-owner.jpg",
@@ -10,7 +10,7 @@ export const testimonialsData = [
   },
   {
     "id": 2,
-    "name": "Mamadou Sow",
+    "name": "Esther Sow",
     "location": "Libreville",
     "rating": 5,
     "comment": "Service impeccable et produits d'une fraîcheur remarquable. Le yaourt au bissap est une merveille !",
@@ -19,8 +19,8 @@ export const testimonialsData = [
   },
   {
     "id": 3,
-    "name": "Aminata Ndiaye",
-    "location": "Dakar",
+    "name": "Crystal",
+    "location": "Libreville",
     "rating": 5,
     "comment": "Milna Gourmet a révolutionné ma façon de consommer les yaourts. Crémeux, savoureux et fait maison. Bravo !",
     "avatar": "/uploads/temoignages/milna-owner.jpg",
