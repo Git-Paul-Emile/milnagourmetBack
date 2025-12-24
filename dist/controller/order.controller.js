@@ -3,6 +3,7 @@ import orderRepository from '../repository/order.repository.js';
 import userRepository from '../repository/user.repository.js';
 import { jsonResponse, AppError } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
+import { WhatsAppService } from '../services/whatsapp.service.js';
 // Fonction helper pour adapter une commande au format frontend
 async function adaptOrderToFrontend(order) {
     // Mapper les éléments de commande (produits normaux)
@@ -193,6 +194,8 @@ class OrderController {
             console.log('[ORDER CREATION] Création de la commande en base de données...');
             const order = await orderRepository.create(dbOrderData);
             console.log('[ORDER CREATION] Commande créée avec succès, ID:', order.id);
+            // Envoi asynchrone de la notification WhatsApp au vendeur
+            WhatsAppService.sendOrderNotification(dbOrderData).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
             // Vider le panier de l'utilisateur après la création de la commande
             if (dbOrderData.utilisateurId) {
                 console.log('[ORDER CREATION] Vidage du panier pour l\'utilisateur:', dbOrderData.utilisateurId);
