@@ -13,16 +13,7 @@ const __dirname = path.dirname(__filename);
 class BrandingService {
   async getBranding() {
     try {
-      // Récupérer le thème actif
-      const activeTheme = await themeService.getActiveTheme();
-
-      let logo: string;
-
-      if (activeTheme && activeTheme.name === 'Noël') {
-        logo = '/uploads/logos/noel-removebg-preview-1766180800922-611188349.png';
-      } else {
-        logo = '/uploads/logos/milna-logo.png';
-      }
+      let logo: string = '/uploads/logos/milna-logo.png';
 
       // Vérifier s'il y a un logo personnalisé dans la base de données
       const branding = await prisma.marque.findFirst();
