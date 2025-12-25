@@ -1076,6 +1076,10 @@ class UploadController {
       const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
       const allImages: { value: string; label: string; isUsed: boolean }[] = [];
 
+      // Déterminer l'URL de base pour les images
+      const isProduction = process.env.NODE_ENV === 'production';
+      const baseUrl = isProduction ? 'https://milnagourmetback.onrender.com' : '';
+
       // Récupérer les images utilisées
       const usedImages = await this.getUsedImagesList();
 
@@ -1090,7 +1094,7 @@ class UploadController {
             return imageExtensions.includes(ext);
           })
           .map(file => {
-            const imagePath = `${basePath}/${file}`;
+            const imagePath = `${baseUrl}${basePath}/${file}`;
             // Créer un label à partir du nom de fichier (sans extension, formaté)
             const nameWithoutExt = path.basename(file, path.extname(file))
               .replace(/-/g, ' ')
@@ -1103,7 +1107,7 @@ class UploadController {
             return {
               value: imagePath,
               label: nameWithoutExt || file,
-              isUsed: usedImages.includes(imagePath)
+              isUsed: usedImages.includes(`${basePath}/${file}`)
             };
           });
         allImages.push(...images);
