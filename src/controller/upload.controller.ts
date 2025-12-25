@@ -1121,6 +1121,9 @@ class UploadController {
       // Lire les images des catégories
       getImagesFromDir(categoriesPath, '/uploads/categories');
 
+      // Lire les images des produits
+      getImagesFromDir(productsPath, '/uploads/produits');
+
       // Lire les images des fruits
       getImagesFromDir(fruitsPath, '/uploads/fruits');
 
