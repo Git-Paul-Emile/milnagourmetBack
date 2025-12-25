@@ -21,7 +21,15 @@ Ce projet contient le backend de l'application Milna Gourmet, une plateforme de 
 ## Configuration
 
 - Configurez la base de données dans `prisma/schema.prisma`.
-- Ajoutez les variables d'environnement dans un fichier `.env` (exemple : DATABASE_URL, JWT_SECRET).
+- Copiez le fichier `.env.example` vers `.env` et remplissez les variables suivantes :
+  - `DATABASE_URL` : URL de connexion à la base de données
+  - `PORT` : Port du serveur (par défaut 3000)
+  - `NODE_ENV` : Environnement (development/production)
+  - `ACCESS_TOKEN_SECRET` : Clé secrète pour les tokens d'accès
+  - `REFRESH_TOKEN_SECRET` : Clé secrète pour les tokens de rafraîchissement
+  - `BCRYPT_SALT` : Sel pour le hashage des mots de passe
+  - `ACCESS_TOKEN_EXPIRY` : Durée d'expiration des tokens d'accès
+  - `REFRESH_TOKEN_EXPIRY` : Durée d'expiration des tokens de rafraîchissement
 
 ## Migration et seed
 
