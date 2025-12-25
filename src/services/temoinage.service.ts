@@ -33,6 +33,7 @@ class TemoinageService {
     rating: number;
     comment: string;
     avatar?: string;
+    active?: boolean;
   }): Promise<Temoinage> {
     try {
       const testimonial = await this.temoinageRepository.create({
@@ -42,7 +43,7 @@ class TemoinageService {
         commentaire: data.comment,
         avatar: data.avatar || null,
         date: new Date(),
-        active: false
+        active: data.active ?? false
       });
 
       return testimonial;

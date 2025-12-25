@@ -8,6 +8,7 @@ declare class TemoinageService {
         rating: number;
         comment: string;
         avatar?: string;
+        active?: boolean;
     }): Promise<Temoinage>;
     updateTestimonial(id: number, data: Partial<{
         name: string;

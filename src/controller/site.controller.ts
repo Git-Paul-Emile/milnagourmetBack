@@ -233,7 +233,7 @@ class SiteController {
   // Créer un témoignage
   async createTestimonial(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, location, rating, comment, avatar } = req.body;
+      const { name, location, rating, comment, avatar, active } = req.body;
 
       if (!name || !location || !rating || !comment) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -259,7 +259,8 @@ class SiteController {
         location,
         rating: parseInt(rating),
         comment,
-        avatar
+        avatar,
+        active: active ?? false
       });
 
       res.status(StatusCodes.CREATED).json(

@@ -953,24 +953,8 @@ class UploadController {
                 });
                 allImages.push(...images);
             };
-            // Lire les images des logos
-            getImagesFromDir(logosPath, '/uploads/logos');
-            // Lire les images des bannières
-            getImagesFromDir(bannersPath, '/uploads/banners');
-            // Lire les images des créations
-            getImagesFromDir(creationsPath, '/uploads/creation');
-            // Lire les images des catégories
-            getImagesFromDir(categoriesPath, '/uploads/categories');
-            // Lire les images des produits
+            // Lire uniquement les images des produits
             getImagesFromDir(productsPath, '/uploads/produits');
-            // Lire les images des fruits
-            getImagesFromDir(fruitsPath, '/uploads/fruits');
-            // Lire les images des sauces
-            getImagesFromDir(saucesPath, '/uploads/sauces');
-            // Lire les images des céréales
-            getImagesFromDir(cerealesPath, '/uploads/cereales');
-            // Lire les images des avatars de toast
-            getImagesFromDir(avatarToastPath, '/uploads/avatarToast');
             // Trier par label
             allImages.sort((a, b) => a.label.localeCompare(b.label));
             res.status(StatusCodes.OK).json(jsonResponse({
