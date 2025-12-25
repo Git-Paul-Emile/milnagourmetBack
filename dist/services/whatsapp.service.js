@@ -37,6 +37,20 @@ export class WhatsAppService {
             details += `Créations personnalisées:\n`;
             order.creationsPersonnalisees.forEach((creation) => {
                 details += `- ${creation.taille?.nom || 'Création'} x${creation.quantite} (${creation.prix} FCFA)\n`;
+                // Ajouter les détails des ingrédients sélectionnés
+                const fruits = creation.fruits?.map((f) => f.fruit?.nom).filter(Boolean) || [];
+                const sauces = creation.sauces?.map((s) => s.sauce?.nom).filter(Boolean) || [];
+                const cereales = creation.cereales?.map((c) => c.cereale?.nom).filter(Boolean) || [];
+                if (fruits.length > 0) {
+                    details += `  • Fruits: ${fruits.join(', ')}\n`;
+                }
+                if (sauces.length > 0) {
+                    details += `  • Sauces: ${sauces.join(', ')}\n`;
+                }
+                if (cereales.length > 0) {
+                    details += `  • Céréales: ${cereales.join(', ')}\n`;
+                }
+                details += '\n';
             });
         }
         // Frais de livraison et total

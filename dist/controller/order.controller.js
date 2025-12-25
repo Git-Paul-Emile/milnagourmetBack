@@ -194,8 +194,9 @@ class OrderController {
             console.log('[ORDER CREATION] Création de la commande en base de données...');
             const order = await orderRepository.create(dbOrderData);
             console.log('[ORDER CREATION] Commande créée avec succès, ID:', order.id);
+            const fullOrder = await orderRepository.findById(order.id);
             // Envoi asynchrone de la notification WhatsApp au vendeur
-            WhatsAppService.sendOrderNotification(order).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
+            WhatsAppService.sendOrderNotification(fullOrder).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
             // Vider le panier de l'utilisateur après la création de la commande
             if (dbOrderData.utilisateurId) {
                 console.log('[ORDER CREATION] Vidage du panier pour l\'utilisateur:', dbOrderData.utilisateurId);
