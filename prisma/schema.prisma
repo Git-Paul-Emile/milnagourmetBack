@@ -167,9 +167,8 @@ model Commande {
 
 enum StatutCommande {
   RECU
-  EN_PREPARATION
-  LIVRAISON
   LIVREE
+  ANNULEE
 }
 
 // Configuration des statuts de commande (traductions, couleurs, icônes)

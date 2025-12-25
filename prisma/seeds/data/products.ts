@@ -6,7 +6,7 @@ export const productsData = [
     "price": 450,
     "description": "Yaourt crémeux nature, préparé avec des ingrédients frais et naturels. Parfait pour un petit-déjeuner sain ou une collation légère.",
     "image": "/uploads/produits/yogurt-nature.jpg",
-    "available": false,
+    "available": true,
     "archived": false
   },
   {

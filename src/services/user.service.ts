@@ -16,7 +16,7 @@ class UserService {
         createdAt: user.createdAt,
         orders: (user as any).commandes.map((cmd: any) => ({
           id: cmd.id.toString(),
-          status: cmd.statut as 'RECU' | 'EN_PREPARATION' | 'LIVRAISON' | 'LIVREE',
+          status: cmd.statut as 'RECU' | 'LIVREE' | 'ANNULEE',
           total: cmd.montantTotal,
           date: cmd.creeLe.toISOString(),
           items: [],

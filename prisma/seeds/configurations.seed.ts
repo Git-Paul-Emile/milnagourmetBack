@@ -5,9 +5,8 @@ export async function seedConfigurations(prisma: PrismaClient) {
   console.log('⚙️ Création des configurations de statuts...');
   const statusConfigs = [
     { statut: 'RECU' as const, libelleFr: 'Reçue', couleurBg: 'bg-blue-100', couleurText: 'text-blue-800', icone: 'CheckCircle', ordre: 1 },
-    { statut: 'EN_PREPARATION' as const, libelleFr: 'En préparation', couleurBg: 'bg-orange-100', couleurText: 'text-orange-800', icone: 'ShoppingBag', ordre: 2 },
-    { statut: 'LIVRAISON' as const, libelleFr: 'En livraison', couleurBg: 'bg-green-100', couleurText: 'text-green-800', icone: 'Truck', ordre: 3 },
-    { statut: 'LIVREE' as const, libelleFr: 'Livrée', couleurBg: 'bg-purple-100', couleurText: 'text-purple-800', icone: 'CheckCircle', ordre: 4 }
+    { statut: 'LIVREE' as const, libelleFr: 'Livrée', couleurBg: 'bg-purple-100', couleurText: 'text-purple-800', icone: 'CheckCircle', ordre: 2 },
+    { statut: 'ANNULEE' as const, libelleFr: 'Annulée', couleurBg: 'bg-red-100', couleurText: 'text-red-800', icone: 'XCircle', ordre: 3 }
   ];
 
   for (const config of statusConfigs) {

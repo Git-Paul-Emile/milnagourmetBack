@@ -14,9 +14,8 @@ class ConfigService {
       // Retourner des valeurs par défaut si la table n'existe pas ou est vide
       return [
         { id: 1, statut: 'RECU', libelleFr: 'Reçue', couleurBg: 'bg-blue-100', couleurText: 'text-blue-800', icone: 'CheckCircle', ordre: 1, creeLe: new Date(), modifieLe: new Date() },
-        { id: 2, statut: 'EN_PREPARATION', libelleFr: 'En préparation', couleurBg: 'bg-orange-100', couleurText: 'text-orange-800', icone: 'ShoppingBag', ordre: 2, creeLe: new Date(), modifieLe: new Date() },
-        { id: 3, statut: 'LIVRAISON', libelleFr: 'En livraison', couleurBg: 'bg-green-100', couleurText: 'text-green-800', icone: 'Truck', ordre: 3, creeLe: new Date(), modifieLe: new Date() },
-        { id: 4, statut: 'LIVREE', libelleFr: 'Livrée', couleurBg: 'bg-purple-100', couleurText: 'text-purple-800', icone: 'CheckCircle', ordre: 4, creeLe: new Date(), modifieLe: new Date() }
+        { id: 2, statut: 'LIVREE', libelleFr: 'Livrée', couleurBg: 'bg-purple-100', couleurText: 'text-purple-800', icone: 'CheckCircle', ordre: 2, creeLe: new Date(), modifieLe: new Date() },
+        { id: 3, statut: 'ANNULEE', libelleFr: 'Annulée', couleurBg: 'bg-red-100', couleurText: 'text-red-800', icone: 'XCircle', ordre: 3, creeLe: new Date(), modifieLe: new Date() }
       ];
     }
   }
