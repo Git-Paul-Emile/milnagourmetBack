@@ -4,7 +4,9 @@ import deliveryZoneService from '../services/deliveryZone.service.js';
 import { jsonResponse, AppError } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { verifyRefreshToken } from '../config/jwt.js';
-import type { RegisterInput, LoginInput } from '../validator/auth.schema.js';
+import { setAuthCookie, clearAuthCookie } from '../utils/cookie.utils.js';
+import type { RegisterInput, LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
+import { updateProfileSchema } from '../validator/auth.schema.js';
 import type { Utilisateur } from '@prisma/client';
 
 // Helper function to adapt user data for frontend with zone name
@@ -45,12 +47,7 @@ class AuthController {
       const adaptedUser = await adaptUserForFrontend(user);
 
       // Définir le refresh token dans un cookie httpOnly
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-      });
+      setAuthCookie(res, refreshToken);
 
       res.status(StatusCodes.CREATED).json(
         jsonResponse({
@@ -77,12 +74,7 @@ class AuthController {
       const adaptedUser = await adaptUserForFrontend(user);
 
       // Définir le refresh token dans un cookie httpOnly
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-      });
+      setAuthCookie(res, refreshToken);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -124,12 +116,7 @@ class AuthController {
       const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(refreshToken);
 
       // Mettre à jour le refresh token dans le cookie
-      res.cookie('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-      });
+      setAuthCookie(res, newRefreshToken);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -147,7 +134,7 @@ class AuthController {
   async logout(req: Request, res: Response, next: NextFunction) {
     try {
       // Supprimer le refresh token du cookie
-      res.clearCookie('refreshToken');
+      clearAuthCookie(res);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -173,7 +160,7 @@ class AuthController {
       await authService.logoutAll(userId);
 
       // Supprimer le refresh token du cookie
-      res.clearCookie('refreshToken');
+      clearAuthCookie(res);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -224,7 +211,7 @@ class AuthController {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
       }
 
-      const updateData = req.body;
+      const updateData = req.body as UpdateProfileInput;
       // Appeler la méthode de service pour mettre à jour le profil
       const user = await authService.updateProfile(userId, updateData);
 

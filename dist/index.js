@@ -1,11 +1,10 @@
-import dotenv from "dotenv";
+import { env } from "./config/env.js";
 import { connectToDatabase } from "./config/database.js";
 import app from "./config/app.js";
-dotenv.config();
 // Lancement
 const initializeApp = async () => {
     try {
-        const PORT = process.env.PORT || 3000;
+        const PORT = env.PORT;
         app.listen(PORT, () => {
             console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
         });

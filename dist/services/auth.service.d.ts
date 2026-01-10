@@ -1,5 +1,5 @@
 import type { Utilisateur } from '@prisma/client';
-import type { RegisterInput, LoginInput } from '../validator/auth.schema.js';
+import type { RegisterInput, LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
 declare class AuthService {
     private userRepository;
     register(data: RegisterInput): Promise<{
@@ -18,7 +18,7 @@ declare class AuthService {
     }>;
     logoutAll(userId: string): Promise<void>;
     findById(id: string): Promise<Utilisateur | null>;
-    updateProfile(id: string, updateData: any): Promise<Utilisateur>;
+    updateProfile(id: string, updateData: UpdateProfileInput): Promise<Utilisateur>;
     deleteAccount(userId: string): Promise<void>;
 }
 declare const _default: AuthService;

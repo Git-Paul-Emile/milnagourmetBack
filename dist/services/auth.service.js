@@ -6,8 +6,8 @@ class AuthService {
     userRepository = userRepository;
     async register(data) {
         try {
-            // Validation des données
-            const validatedData = registerSchema.parse(data);
+            // Validation des données gérée par le middleware
+            const validatedData = data;
             // Vérifier si un utilisateur avec ce téléphone existe déjà
             const existingUser = await userRepository.findByPhone(validatedData.telephone);
             if (existingUser) {
@@ -41,8 +41,8 @@ class AuthService {
     }
     async login(data) {
         try {
-            // Validation des données
-            const validatedData = loginSchema.parse(data);
+            // Validation des données gérée par le middleware
+            const validatedData = data;
             // Trouver l'utilisateur par téléphone
             const user = await userRepository.findByPhone(validatedData.telephone);
             if (!user) {
@@ -143,7 +143,7 @@ class AuthService {
                 updatePayload.telephone = updateData.telephone;
             if (updateData.deliveryZoneId) {
                 // Le frontend envoie deliveryZoneId (id de la zone)
-                updatePayload.zoneLivraisonId = parseInt(updateData.deliveryZoneId);
+                updatePayload.zoneLivraisonId = updateData.deliveryZoneId;
             }
             // Si un nouveau mot de passe est fourni, le hasher
             if (updateData.motDePasse) {

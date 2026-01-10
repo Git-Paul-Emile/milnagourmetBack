@@ -1,6 +1,6 @@
 import userRepository from '../repository/user.repository.js';
 import type { Utilisateur } from '@prisma/client';
-import type { RegisterInput, LoginInput } from '../validator/auth.schema.js';
+import type { RegisterInput, LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
 import { registerSchema, loginSchema } from '../validator/auth.schema.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, type AccessTokenPayload, type RefreshTokenPayload } from '../config/jwt.js';
 import bcrypt from 'bcrypt';
@@ -10,8 +10,8 @@ class AuthService {
 
   async register(data: RegisterInput): Promise<{ user: Utilisateur; accessToken: string; refreshToken: string }> {
     try {
-      // Validation des données
-      const validatedData = registerSchema.parse(data);
+      // Validation des données gérée par le middleware
+      const validatedData = data;
 
       // Vérifier si un utilisateur avec ce téléphone existe déjà
       const existingUser = await userRepository.findByPhone(validatedData.telephone);
@@ -52,8 +52,8 @@ class AuthService {
 
   async login(data: LoginInput): Promise<{ user: Utilisateur; accessToken: string; refreshToken: string }> {
     try {
-      // Validation des données
-      const validatedData = loginSchema.parse(data);
+      // Validation des données gérée par le middleware
+      const validatedData = data;
 
       // Trouver l'utilisateur par téléphone
       const user = await userRepository.findByPhone(validatedData.telephone);
@@ -157,7 +157,7 @@ class AuthService {
     }
   }
 
-  async updateProfile(id: string, updateData: any): Promise<Utilisateur> {
+  async updateProfile(id: string, updateData: UpdateProfileInput): Promise<Utilisateur> {
     try {
       // Préparer les données de mise à jour
       const updatePayload: any = {};
@@ -166,7 +166,7 @@ class AuthService {
       if (updateData.telephone) updatePayload.telephone = updateData.telephone;
       if (updateData.deliveryZoneId) {
         // Le frontend envoie deliveryZoneId (id de la zone)
-        updatePayload.zoneLivraisonId = parseInt(updateData.deliveryZoneId);
+        updatePayload.zoneLivraisonId = updateData.deliveryZoneId;
       }
 
       // Si un nouveau mot de passe est fourni, le hasher

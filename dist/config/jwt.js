@@ -1,20 +1,13 @@
 import jwt from "jsonwebtoken";
+import { env } from "./env.js";
 const getAccessTokenSecret = () => {
-    const secret = process.env.ACCESS_TOKEN_SECRET;
-    if (!secret) {
-        throw new Error("ACCESS_TOKEN_SECRET manquant dans .env");
-    }
-    return secret;
+    return env.ACCESS_TOKEN_SECRET;
 };
 const getRefreshTokenSecret = () => {
-    const secret = process.env.REFRESH_TOKEN_SECRET;
-    if (!secret) {
-        throw new Error("REFRESH_TOKEN_SECRET manquant dans .env");
-    }
-    return secret;
+    return env.REFRESH_TOKEN_SECRET;
 };
-const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || "15m";
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || "7d";
+const ACCESS_TOKEN_EXPIRY = env.ACCESS_TOKEN_EXPIRY;
+const REFRESH_TOKEN_EXPIRY = env.REFRESH_TOKEN_EXPIRY;
 export const generateAccessToken = (payload) => {
     return jwt.sign(payload, getAccessTokenSecret(), {
         expiresIn: ACCESS_TOKEN_EXPIRY,

@@ -1,11 +1,12 @@
 import twilio from 'twilio';
+import { env } from '../config/env.js';
 
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const client = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
 
 export class WhatsAppService {
   static async sendOrderNotification(order: any): Promise<void> {
     try {
-      const vendorNumber = process.env.VENDOR_WHATSAPP_NUMBER;
+      const vendorNumber = env.VENDOR_WHATSAPP_NUMBER;
       if (!vendorNumber) {
         console.warn('Numéro WhatsApp du vendeur non configuré');
         return;
@@ -14,7 +15,7 @@ export class WhatsAppService {
       const message = `🔔 Nouvelle commande reçue !\n\nClient : ${order.nomClient}\nTéléphone: ${order.telephoneClient}\n\nDétails de la commande :\n${this.formatOrderDetails(order)}\nVeuillez traiter cette commande rapidement.`;
 
       await client.messages.create({
-        from: process.env.TWILIO_WHATSAPP_NUMBER,
+        from: env.TWILIO_WHATSAPP_NUMBER,
         to: vendorNumber,
         body: message,
       });

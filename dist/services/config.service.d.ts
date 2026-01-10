@@ -34,8 +34,8 @@ declare class ConfigService {
         creeLe: Date;
         modifieLe: Date;
         categorieId: number;
-        libelleFr: string;
         code: string;
+        libelleFr: string;
     })[]>;
     getSizeTranslations(): Promise<({
         taille: {
@@ -53,8 +53,8 @@ declare class ConfigService {
         creeLe: Date;
         modifieLe: Date;
         tailleId: number;
-        libelleFr: string;
         code: string;
+        libelleFr: string;
     })[] | {
         id: number;
         tailleId: number;
@@ -111,8 +111,8 @@ declare class ConfigService {
             creeLe: Date;
             modifieLe: Date;
             categorieId: number;
-            libelleFr: string;
             code: string;
+            libelleFr: string;
         })[];
         sizeTranslations: ({
             taille: {
@@ -130,8 +130,8 @@ declare class ConfigService {
             creeLe: Date;
             modifieLe: Date;
             tailleId: number;
-            libelleFr: string;
             code: string;
+            libelleFr: string;
         })[] | {
             id: number;
             tailleId: number;

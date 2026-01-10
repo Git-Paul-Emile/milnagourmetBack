@@ -3,6 +3,8 @@ import deliveryZoneService from '../services/deliveryZone.service.js';
 import { jsonResponse, AppError } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { verifyRefreshToken } from '../config/jwt.js';
+import { setAuthCookie, clearAuthCookie } from '../utils/cookie.utils.js';
+import { updateProfileSchema } from '../validator/auth.schema.js';
 // Helper function to adapt user data for frontend with zone name
 async function adaptUserForFrontend(user) {
     let zoneLivraison = null;
@@ -37,12 +39,7 @@ class AuthController {
             // Adapter les données pour le frontend
             const adaptedUser = await adaptUserForFrontend(user);
             // Définir le refresh token dans un cookie httpOnly
-            res.cookie('refreshToken', refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-            });
+            setAuthCookie(res, refreshToken);
             res.status(StatusCodes.CREATED).json(jsonResponse({
                 status: 'success',
                 message: `Bienvenue ${user.nomComplet} ! Votre compte a été créé avec succès.`,
@@ -64,12 +61,7 @@ class AuthController {
             // Adapter les données pour le frontend
             const adaptedUser = await adaptUserForFrontend(user);
             // Définir le refresh token dans un cookie httpOnly
-            res.cookie('refreshToken', refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-            });
+            setAuthCookie(res, refreshToken);
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: `Bon retour ${user.nomComplet} !`,
@@ -104,12 +96,7 @@ class AuthController {
             }
             const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(refreshToken);
             // Mettre à jour le refresh token dans le cookie
-            res.cookie('refreshToken', newRefreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-            });
+            setAuthCookie(res, newRefreshToken);
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: 'Token rafraîchi avec succès',
@@ -124,7 +111,7 @@ class AuthController {
     async logout(req, res, next) {
         try {
             // Supprimer le refresh token du cookie
-            res.clearCookie('refreshToken');
+            clearAuthCookie(res);
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: 'Déconnexion réussie'
@@ -144,7 +131,7 @@ class AuthController {
             }
             await authService.logoutAll(userId);
             // Supprimer le refresh token du cookie
-            res.clearCookie('refreshToken');
+            clearAuthCookie(res);
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: 'Déconnexion de tous les appareils réussie'

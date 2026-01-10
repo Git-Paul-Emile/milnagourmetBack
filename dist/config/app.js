@@ -1,3 +1,4 @@
+import { env } from "./env.js";
 import express, {} from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -25,10 +26,10 @@ const app = express();
 // Configuration CORS
 // Autoriser l'origine du front (par défaut Vite: 8080)
 const allowedOrigins = [
-    process.env.FRONT_URL || 'http://localhost:8080',
-    'http://localhost:5173', // Vite default
-    'http://localhost:8081',
-    'https://milnagourmet-front.vercel.app/' // URL de production Vercel
+    env.FRONT_URL,
+    ...(env.CORS_ORIGINS ? env.CORS_ORIGINS.split(',') : []),
+    'http://localhost:8080',
+    'http://localhost:8081'
 ];
 const corsOptions = {
     origin: (origin, callback) => {
