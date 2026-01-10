@@ -8,9 +8,9 @@ const validateResource = (schema: ZodSchema) => (req: Request, res: Response, ne
     schema.parse(req.body);
     next();
   } catch (e: any) {
-    if (e.errors) {
+    if (e.issues) {
        // Format Zod errors
-      const errorMessage = e.errors.map((err: any) => err.message).join(', ');
+      const errorMessage = e.issues.map((err: any) => err.message).join(', ');
       next(new AppError(errorMessage, StatusCodes.BAD_REQUEST));
     } else {
       next(e);
