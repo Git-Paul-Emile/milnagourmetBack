@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 
 const validateResource = (schema: ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
   try {
-    schema.parse(req.body);
+    req.body = schema.parse(req.body);
     next();
   } catch (e: any) {
     if (e.issues) {

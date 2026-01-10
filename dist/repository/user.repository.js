@@ -15,7 +15,7 @@ class UserRepository {
         }
         catch (error) {
             console.error('Erreur lors de la création de l\'utilisateur:', error);
-            throw new Error('Impossible de créer l\'utilisateur');
+            throw new Error(`Impossible de créer l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         }
     }
     async findAll() {

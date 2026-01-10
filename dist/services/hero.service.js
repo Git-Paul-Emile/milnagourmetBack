@@ -17,7 +17,7 @@ class HeroService {
                 title: "Bienvenue à Milna Gourmet",
                 subtitle: "Votre Salon du Yaourt pour des gourmets délicieusement fait maison. Découvrez notre menu dans le catalogue et savourez l'excellence à chaque cuillerée.",
                 badge: "Le Salon du Yaourt Premium",
-                banner: hero.banner && hero.banner.startsWith('/uploads/') ? `https://milnagourmetback.onrender.com${hero.banner}` : hero.banner,
+                banner: hero.banner,
                 features: hero.caracteristiques.map((feature) => ({
                     title: feature.titre,
                     description: feature.description

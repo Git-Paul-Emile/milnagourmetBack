@@ -1,8 +1,8 @@
 import type { Utilisateur } from '@prisma/client';
-import type { RegisterInput, LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
+import type { LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
 declare class AuthService {
     private userRepository;
-    register(data: RegisterInput): Promise<{
+    register(data: any): Promise<{
         user: Utilisateur;
         accessToken: string;
         refreshToken: string;

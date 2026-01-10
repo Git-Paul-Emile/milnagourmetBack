@@ -1,6 +1,8 @@
 import cartRepository from '../repository/cart.repository.js';
 import type { CartWithItems, CreateCartItemData, UpdateCartItemData } from '../repository/cart.repository.js';
 import { prisma } from '../config/database.js';
+import { WhatsAppService } from './whatsapp.service.js';
+import orderRepository from '../repository/order.repository.js';
 
 class CartService {
   private cartRepository = cartRepository;
@@ -206,8 +208,17 @@ class CartService {
         throw new Error('Le panier est vide');
       }
 
+      // Récupérer les informations de l'utilisateur
+      const user = await prisma.utilisateur.findUnique({
+        where: { id: utilisateurId },
+        select: { nomComplet: true, telephone: true }
+      });
+
+      if (!user) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
       // Valider le stock pour chaque article
-      const { prisma } = await import('../config/database.js');
       let totalAmount = 0;
 
       // Valider les produits réguliers
@@ -240,8 +251,8 @@ class CartService {
       const commande = await prisma.commande.create({
         data: {
           utilisateurId,
-          nomClient: '', // À remplir depuis les données utilisateur
-          telephoneClient: '', // À remplir depuis les données utilisateur
+          nomClient: user.nomComplet,
+          telephoneClient: user.telephone,
           montantTotal: totalAmount,
           elements: cart.elements ? {
             create: cart.elements.map(element => ({
@@ -274,6 +285,14 @@ class CartService {
           } : undefined
         }
       });
+
+      // Récupérer la commande complète avec relations pour la notification WhatsApp
+      const fullOrder = await orderRepository.findById(commande.id);
+
+      // Envoi asynchrone de la notification WhatsApp au vendeur
+      WhatsAppService.sendOrderNotification(fullOrder).catch((error: any) =>
+        console.error('Erreur WhatsApp ignorée :', error)
+      );
 
       // Vider le panier
       await this.cartRepository.clearCart(cart.id);

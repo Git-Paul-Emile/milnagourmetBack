@@ -897,15 +897,27 @@ class UploadController {
                 }));
             }
             const filePath = path.join(uploadsPath, folder, filename);
+            console.log(`Tentative de suppression: ${filePath}`);
             // Vérifier si le fichier existe
             if (!fs.existsSync(filePath)) {
+                console.log(`Fichier non trouvé: ${filePath}`);
                 return res.status(StatusCodes.NOT_FOUND).json(jsonResponse({
                     status: 'error',
                     message: 'Image non trouvée'
                 }));
             }
             // Supprimer le fichier
-            fs.unlinkSync(filePath);
+            try {
+                fs.unlinkSync(filePath);
+                console.log(`Image supprimée: ${filePath}`);
+            }
+            catch (unlinkError) {
+                console.error(`Erreur lors de la suppression du fichier ${filePath}:`, unlinkError);
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(jsonResponse({
+                    status: 'error',
+                    message: 'Erreur lors de la suppression du fichier'
+                }));
+            }
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: 'Image supprimée avec succès'
@@ -936,7 +948,7 @@ class UploadController {
                     return imageExtensions.includes(ext);
                 })
                     .map(file => {
-                    const imagePath = `${baseUrl}${basePath}/${file}`;
+                    const imagePath = `${basePath}/${file}`;
                     // Créer un label à partir du nom de fichier (sans extension, formaté)
                     const nameWithoutExt = path.basename(file, path.extname(file))
                         .replace(/-/g, ' ')
@@ -953,8 +965,17 @@ class UploadController {
                 });
                 allImages.push(...images);
             };
-            // Lire uniquement les images des produits
+            // Lire les images de tous les dossiers
             getImagesFromDir(productsPath, '/uploads/produits');
+            getImagesFromDir(logosPath, '/uploads/logos');
+            getImagesFromDir(bannersPath, '/uploads/banners');
+            getImagesFromDir(creationsPath, '/uploads/creation');
+            getImagesFromDir(testimonialsPath, '/uploads/temoignages');
+            getImagesFromDir(categoriesPath, '/uploads/categories');
+            getImagesFromDir(fruitsPath, '/uploads/fruits');
+            getImagesFromDir(saucesPath, '/uploads/sauces');
+            getImagesFromDir(cerealesPath, '/uploads/cereales');
+            getImagesFromDir(avatarToastPath, '/uploads/avatarToast');
             // Trier par label
             allImages.sort((a, b) => a.label.localeCompare(b.label));
             res.status(StatusCodes.OK).json(jsonResponse({

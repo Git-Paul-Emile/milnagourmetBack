@@ -6,8 +6,8 @@ class AuthService {
     userRepository = userRepository;
     async register(data) {
         try {
-            // Validation des données gérée par le middleware
-            const validatedData = data;
+            // Validation des données
+            const validatedData = registerSchema.parse(data);
             // Vérifier si un utilisateur avec ce téléphone existe déjà
             const existingUser = await userRepository.findByPhone(validatedData.telephone);
             if (existingUser) {

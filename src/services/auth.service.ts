@@ -8,10 +8,10 @@ import bcrypt from 'bcrypt';
 class AuthService {
   private userRepository = userRepository;
 
-  async register(data: RegisterInput): Promise<{ user: Utilisateur; accessToken: string; refreshToken: string }> {
+  async register(data: any): Promise<{ user: Utilisateur; accessToken: string; refreshToken: string }> {
     try {
-      // Validation des données gérée par le middleware
-      const validatedData = data;
+      // Validation des données
+      const validatedData = registerSchema.parse(data);
 
       // Vérifier si un utilisateur avec ce téléphone existe déjà
       const existingUser = await userRepository.findByPhone(validatedData.telephone);

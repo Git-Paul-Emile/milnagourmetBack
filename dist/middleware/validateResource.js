@@ -2,13 +2,13 @@ import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 const validateResource = (schema) => (req, res, next) => {
     try {
-        schema.parse(req.body);
+        req.body = schema.parse(req.body);
         next();
     }
     catch (e) {
-        if (e.errors) {
+        if (e.issues) {
             // Format Zod errors
-            const errorMessage = e.errors.map((err) => err.message).join(', ');
+            const errorMessage = e.issues.map((err) => err.message).join(', ');
             next(new AppError(errorMessage, StatusCodes.BAD_REQUEST));
         }
         else {

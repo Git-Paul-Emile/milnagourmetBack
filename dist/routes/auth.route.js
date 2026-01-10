@@ -5,7 +5,7 @@ import validateResource from '../middleware/validateResource.js';
 import { registerSchema, loginSchema, updateProfileSchema } from '../validator/auth.schema.js';
 const router = Router();
 // Inscription d'un nouvel utilisateur
-router.post('/register', validateResource(registerSchema), authController.register);
+router.post('/register', authController.register);
 // Connexion d'un utilisateur
 router.post('/login', validateResource(loginSchema), authController.login);
 // Rafraîchir le token d'accès

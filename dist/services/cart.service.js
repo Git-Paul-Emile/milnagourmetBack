@@ -1,5 +1,7 @@
 import cartRepository from '../repository/cart.repository.js';
 import { prisma } from '../config/database.js';
+import { WhatsAppService } from './whatsapp.service.js';
+import orderRepository from '../repository/order.repository.js';
 class CartService {
     cartRepository = cartRepository;
     // Récupérer le panier d'un utilisateur
@@ -178,8 +180,15 @@ class CartService {
             if (!cart || ((!cart.elements || cart.elements.length === 0) && (!cart.creations || cart.creations.length === 0))) {
                 throw new Error('Le panier est vide');
             }
+            // Récupérer les informations de l'utilisateur
+            const user = await prisma.utilisateur.findUnique({
+                where: { id: utilisateurId },
+                select: { nomComplet: true, telephone: true }
+            });
+            if (!user) {
+                throw new Error('Utilisateur non trouvé');
+            }
             // Valider le stock pour chaque article
-            const { prisma } = await import('../config/database.js');
             let totalAmount = 0;
             // Valider les produits réguliers
             if (cart.elements) {
@@ -206,8 +215,8 @@ class CartService {
             const commande = await prisma.commande.create({
                 data: {
                     utilisateurId,
-                    nomClient: '', // À remplir depuis les données utilisateur
-                    telephoneClient: '', // À remplir depuis les données utilisateur
+                    nomClient: user.nomComplet,
+                    telephoneClient: user.telephone,
                     montantTotal: totalAmount,
                     elements: cart.elements ? {
                         create: cart.elements.map(element => ({
@@ -240,6 +249,10 @@ class CartService {
                     } : undefined
                 }
             });
+            // Récupérer la commande complète avec relations pour la notification WhatsApp
+            const fullOrder = await orderRepository.findById(commande.id);
+            // Envoi asynchrone de la notification WhatsApp au vendeur
+            WhatsAppService.sendOrderNotification(fullOrder).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
             // Vider le panier
             await this.cartRepository.clearCart(cart.id);
             return {

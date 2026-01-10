@@ -7,7 +7,7 @@ import { registerSchema, loginSchema, updateProfileSchema } from '../validator/a
 const router: Router = Router();
 
 // Inscription d'un nouvel utilisateur
-router.post('/register', validateResource(registerSchema), authController.register);
+router.post('/register', authController.register);
 
 // Connexion d'un utilisateur
 router.post('/login', validateResource(loginSchema), authController.login);
