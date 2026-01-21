@@ -6,6 +6,7 @@ import { jsonResponse, AppError } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
 import type { CommandeWithRelations } from '../repository/order.repository.js';
 import { WhatsAppService } from '../services/whatsapp.service.js';
+import { LoyaltyService } from '../services/loyalty.service.js';
 
 interface FrontendOrderData {
   id: string;
@@ -248,6 +249,16 @@ class OrderController {
         const cartService = (await import('../services/cart.service.js')).default;
         await cartService.clearCart(dbOrderData.utilisateurId);
         console.log('[ORDER CREATION] Panier vidé avec succès');
+
+        // Ajouter les points de fidélité
+        try {
+          console.log('[ORDER CREATION] Ajout des points de fidélité pour l\'utilisateur:', dbOrderData.utilisateurId);
+          await LoyaltyService.addPoints(dbOrderData.utilisateurId, order.id, dbOrderData.montantTotal);
+          console.log('[ORDER CREATION] Points de fidélité ajoutés avec succès');
+        } catch (error) {
+          console.error('[ORDER CREATION] Erreur lors de l\'ajout des points de fidélité:', error);
+          // Ne pas échouer la commande pour une erreur de fidélité
+        }
       }
 
       // Adapter la réponse pour le frontend

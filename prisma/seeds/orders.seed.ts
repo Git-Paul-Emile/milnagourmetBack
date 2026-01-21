@@ -1,5 +1,37 @@
 import { PrismaClient } from '@prisma/client';
 import { ordersData } from './data/orders.js';
+import { LoyaltyService } from '../../src/services/loyalty.service.js';
+
+interface OrderItem {
+  productId: string;
+  quantity: number;
+  price: number;
+}
+
+interface CustomCreation {
+  sizeId: string;
+  quantity: number;
+  price: number;
+  fruits: string[];
+  sauces: string[];
+  cereales: string[];
+}
+
+interface OrderData {
+  id: string;
+  userId?: string;
+  deliveryPersonId?: string;
+  customerName: string;
+  customerPhone: string;
+  status: string;
+  totalAmount: number;
+  deliveryFee: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+  customCreations: CustomCreation[];
+}
 
 export async function seedOrders(
   prisma: PrismaClient,
@@ -14,7 +46,7 @@ export async function seedOrders(
 ) {
   console.log('📦 Création des commandes...');
 
-  for (const order of ordersData) {
+  for (const order of ordersData as OrderData[]) {
     const dbUserId = order.userId ? userIdMap[order.userId] : null;
     
     // Récupérer le livreur ID
@@ -105,6 +137,11 @@ export async function seedOrders(
           });
         }
       }
+    }
+
+    // Ajouter les points de fidélité si l'utilisateur existe
+    if (dbUserId) {
+      await LoyaltyService.addPoints(dbUserId, createdOrder.id, order.totalAmount);
     }
   }
 }

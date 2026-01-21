@@ -14,22 +14,24 @@ datasource db {
 // ============================================
 
 model Utilisateur {
-  id             Int              @id @default(autoincrement())
-  telephone      String           @unique
-  nomComplet     String
-  blocked        Boolean          @default(false)
-  password       String
-  tokenVersion   Int              @default(0)
-  role           String?          @default("USER")
-  zoneLivraisonId Int?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+   id             Int              @id @default(autoincrement())
+   telephone      String           @unique
+   nomComplet     String
+   blocked        Boolean          @default(false)
+   password       String
+   tokenVersion   Int              @default(0)
+   role           String?          @default("USER")
+   zoneLivraisonId Int?
+   pointsFidelite Decimal          @default(0) @db.Decimal(65, 2)
+   createdAt      DateTime         @default(now())
+   updatedAt      DateTime         @updatedAt
 
-  commandes     Commande[]
-  paniers       Panier[]
-  zoneLivraison ZoneLivraison?    @relation(fields: [zoneLivraisonId], references: [id])
+   commandes     Commande[]
+   paniers       Panier[]
+   zoneLivraison ZoneLivraison?    @relation(fields: [zoneLivraisonId], references: [id])
+   historiquePoints HistoriquePoints[]
 
-  @@map("users")
+   @@map("users")
 }
 
 // ============================================
@@ -144,25 +146,26 @@ model TraductionCategorie {
 // ============================================
 
 model Commande {
-   id              Int            @id @default(autoincrement())
-   numeroCommande  String         @unique @default(cuid())
-   utilisateurId   Int?
-   nomClient       String
-   telephoneClient String
-   statut          StatutCommande @default(RECU)
-   montantTotal    Int
-   fraisLivraison  Int            @default(0)
-   notes           String?
-   creeLe          DateTime       @default(now())
-   modifieLe       DateTime       @updatedAt
+    id              Int            @id @default(autoincrement())
+    numeroCommande  String         @unique @default(cuid())
+    utilisateurId   Int?
+    nomClient       String
+    telephoneClient String
+    statut          StatutCommande @default(RECU)
+    montantTotal    Int
+    fraisLivraison  Int            @default(0)
+    notes           String?
+    creeLe          DateTime       @default(now())
+    modifieLe       DateTime       @updatedAt
 
-  utilisateur             Utilisateur?            @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-  elements                ElementCommande[]
-  creationsPersonnalisees CreationPersonnalisee[]
-  livreur                 Livreur?                @relation(fields: [livreurId], references: [id])
-  livreurId               Int?
+   utilisateur             Utilisateur?            @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+   elements                ElementCommande[]
+   creationsPersonnalisees CreationPersonnalisee[]
+   livreur                 Livreur?                @relation(fields: [livreurId], references: [id])
+   historiquePoints        HistoriquePoints[]
+   livreurId               Int?
 
-  @@map("orders")
+   @@map("orders")
 }
 
 enum StatutCommande {
@@ -483,18 +486,34 @@ model Navigation {
 // THÈMES ET CHARTES GRAPHIQUES
 // ============================================
 
-model Theme {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  lightColors Json     // Objet avec toutes les variables CSS pour le mode clair
-  darkColors  Json?    // Objet avec toutes les variables CSS pour le mode sombre (optionnel)
-  isDefault   Boolean  @default(false)
-  isActive    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model HistoriquePoints {
+   id            Int      @id @default(autoincrement())
+   utilisateurId Int
+   type          String   // 'GAIN' ou 'UTILISATION'
+   points        Decimal  @db.Decimal(65, 2)
+   montant       Decimal? @db.Decimal(65, 2) // Montant TTC pour les gains, montant de remise pour les utilisations
+   description   String
+   commandeId    Int?     // Référence à la commande si applicable
+   creeLe        DateTime @default(now())
 
-  @@map("themes")
+   utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+   commande    Commande?   @relation(fields: [commandeId], references: [id])
+
+   @@map("loyalty_history")
+}
+
+model Theme {
+   id          Int      @id @default(autoincrement())
+   name        String   @unique
+   description String?
+   lightColors Json     // Objet avec toutes les variables CSS pour le mode clair
+   darkColors  Json?    // Objet avec toutes les variables CSS pour le mode sombre (optionnel)
+   isDefault   Boolean  @default(false)
+   isActive    Boolean  @default(false)
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
+
+   @@map("themes")
 }
 
 

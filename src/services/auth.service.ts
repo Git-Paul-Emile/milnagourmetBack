@@ -4,6 +4,8 @@ import type { RegisterInput, LoginInput, UpdateProfileInput } from '../validator
 import { registerSchema, loginSchema } from '../validator/auth.schema.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, type AccessTokenPayload, type RefreshTokenPayload } from '../config/jwt.js';
 import bcrypt from 'bcrypt';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
 
 class AuthService {
   private userRepository = userRepository;
@@ -16,7 +18,7 @@ class AuthService {
       // Vérifier si un utilisateur avec ce téléphone existe déjà
       const existingUser = await userRepository.findByPhone(validatedData.telephone);
       if (existingUser) {
-        throw new Error('Un compte avec ce numéro de téléphone existe déjà');
+        throw new AppError('Un compte avec ce numéro de téléphone existe déjà', StatusCodes.BAD_REQUEST);
       }
 
       // Hasher le mot de passe
