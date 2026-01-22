@@ -1,8 +1,8 @@
 import { prisma } from '../config/database.js';
 
 export class LoyaltyService {
-  private static readonly POINTS_PER_CFA = 0.0003; // 0.03% du montant TTC
-  private static readonly CFA_PER_POINT = 1 / 0.0003; // Valeur CFA par point
+  private static readonly CFA_PER_POINT = 15; // 1 point = 15 F de remise
+  private static readonly POINTS_PER_CFA = 1 / this.CFA_PER_POINT; // Environ 0.0667 points par F
   private static readonly MIN_POINTS_FOR_DISCOUNT = 100; // Seuil minimum
 
   /**

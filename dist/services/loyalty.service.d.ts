@@ -1,6 +1,6 @@
 export declare class LoyaltyService {
-    private static readonly POINTS_PER_CFA;
     private static readonly CFA_PER_POINT;
+    private static readonly POINTS_PER_CFA;
     private static readonly MIN_POINTS_FOR_DISCOUNT;
     /**
      * Calcule les points gagnés pour un montant TTC
