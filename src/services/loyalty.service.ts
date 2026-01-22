@@ -168,4 +168,24 @@ export class LoyaltyService {
     if (points >= this.MIN_POINTS_FOR_DISCOUNT) return 0;
     return this.MIN_POINTS_FOR_DISCOUNT - points;
   }
+
+  /**
+   * Met à jour l'historique des points avec l'ID de commande
+   */
+  static async updatePointsHistoryWithOrderId(userId: number, orderId: number, pointsUsed: number): Promise<void> {
+    await prisma.historiquePoints.updateMany({
+      where: {
+        utilisateurId: userId,
+        type: 'UTILISATION',
+        commandeId: null,
+        points: -pointsUsed, // Négatif pour les utilisations
+        creeLe: {
+          gte: new Date(Date.now() - 60000) // Dans la dernière minute
+        }
+      },
+      data: {
+        commandeId: orderId
+      }
+    });
+  }
 }

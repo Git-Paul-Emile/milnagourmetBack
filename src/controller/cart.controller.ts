@@ -283,7 +283,9 @@ class CartController {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
       }
 
-      const result = await this.cartService.checkout(parseInt(userId));
+      const { pointsUsed = 0 } = req.body;
+
+      const result = await this.cartService.checkout(parseInt(userId), pointsUsed);
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -291,7 +293,8 @@ class CartController {
           message: 'Commande créée avec succès',
           data: {
             orderId: result.orderId,
-            totalAmount: result.totalAmount
+            totalAmount: result.totalAmount,
+            discountAmount: result.discountAmount
           }
         })
       );

@@ -2,6 +2,7 @@ import cartRepository from '../repository/cart.repository.js';
 import type { CartWithItems, CreateCartItemData, UpdateCartItemData } from '../repository/cart.repository.js';
 import { prisma } from '../config/database.js';
 import { WhatsAppService } from './whatsapp.service.js';
+import { LoyaltyService } from './loyalty.service.js';
 import orderRepository from '../repository/order.repository.js';
 
 class CartService {
@@ -200,8 +201,8 @@ class CartService {
     }
   }
 
-  // Procédure de checkout avec validation du stock
-  async checkout(utilisateurId: number): Promise<{ orderId: number; totalAmount: number }> {
+  // Procédure de checkout avec validation du stock et remise fidélité
+  async checkout(utilisateurId: number, pointsToUse: number = 0): Promise<{ orderId: number; totalAmount: number; discountAmount?: number }> {
     try {
       const cart = await this.cartRepository.findByUserId(utilisateurId);
       if (!cart || ((!cart.elements || cart.elements.length === 0) && (!cart.creations || cart.creations.length === 0))) {
@@ -247,6 +248,13 @@ class CartService {
         }
       }
 
+      // Appliquer la remise fidélité si demandée
+      let discountAmount = 0;
+      if (pointsToUse > 0) {
+        discountAmount = await LoyaltyService.usePoints(utilisateurId, pointsToUse);
+        totalAmount -= discountAmount;
+      }
+
       // Créer la commande
       const commande = await prisma.commande.create({
         data: {
@@ -286,6 +294,11 @@ class CartService {
         }
       });
 
+      // Mettre à jour l'historique des points avec l'ID de commande
+      if (pointsToUse > 0) {
+        await LoyaltyService.updatePointsHistoryWithOrderId(utilisateurId, commande.id, pointsToUse);
+      }
+
       // Récupérer la commande complète avec relations pour la notification WhatsApp
       const fullOrder = await orderRepository.findById(commande.id);
 
@@ -299,7 +312,8 @@ class CartService {
 
       return {
         orderId: commande.id,
-        totalAmount
+        totalAmount,
+        discountAmount
       };
     } catch (error) {
       console.error('Erreur lors du checkout:', error);

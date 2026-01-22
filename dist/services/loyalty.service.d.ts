@@ -42,5 +42,9 @@ export declare class LoyaltyService {
      * Calcule les points restants pour atteindre le seuil
      */
     static getPointsToNextThreshold(points: number): number;
+    /**
+     * Met à jour l'historique des points avec l'ID de commande
+     */
+    static updatePointsHistoryWithOrderId(userId: number, orderId: number, pointsUsed: number): Promise<void>;
 }
 //# sourceMappingURL=loyalty.service.d.ts.map

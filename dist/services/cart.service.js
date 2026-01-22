@@ -1,6 +1,7 @@
 import cartRepository from '../repository/cart.repository.js';
 import { prisma } from '../config/database.js';
 import { WhatsAppService } from './whatsapp.service.js';
+import { LoyaltyService } from './loyalty.service.js';
 import orderRepository from '../repository/order.repository.js';
 class CartService {
     cartRepository = cartRepository;
@@ -173,8 +174,8 @@ class CartService {
             throw error;
         }
     }
-    // Procédure de checkout avec validation du stock
-    async checkout(utilisateurId) {
+    // Procédure de checkout avec validation du stock et remise fidélité
+    async checkout(utilisateurId, pointsToUse = 0) {
         try {
             const cart = await this.cartRepository.findByUserId(utilisateurId);
             if (!cart || ((!cart.elements || cart.elements.length === 0) && (!cart.creations || cart.creations.length === 0))) {
@@ -210,6 +211,12 @@ class CartService {
                 for (const creation of cart.creations) {
                     totalAmount += creation.prix * creation.quantite;
                 }
+            }
+            // Appliquer la remise fidélité si demandée
+            let discountAmount = 0;
+            if (pointsToUse > 0) {
+                discountAmount = await LoyaltyService.usePoints(utilisateurId, pointsToUse);
+                totalAmount -= discountAmount;
             }
             // Créer la commande
             const commande = await prisma.commande.create({
@@ -249,6 +256,10 @@ class CartService {
                     } : undefined
                 }
             });
+            // Mettre à jour l'historique des points avec l'ID de commande
+            if (pointsToUse > 0) {
+                await LoyaltyService.updatePointsHistoryWithOrderId(utilisateurId, commande.id, pointsToUse);
+            }
             // Récupérer la commande complète avec relations pour la notification WhatsApp
             const fullOrder = await orderRepository.findById(commande.id);
             // Envoi asynchrone de la notification WhatsApp au vendeur
@@ -257,7 +268,8 @@ class CartService {
             await this.cartRepository.clearCart(cart.id);
             return {
                 orderId: commande.id,
-                totalAmount
+                totalAmount,
+                discountAmount
             };
         }
         catch (error) {

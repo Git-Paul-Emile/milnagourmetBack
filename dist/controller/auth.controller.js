@@ -25,6 +25,7 @@ async function adaptUserForFrontend(user) {
         zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
         zoneLivraison,
         role: user.role || 'USER',
+        pointsFidelite: Number(user.pointsFidelite) || 0,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString()
     };

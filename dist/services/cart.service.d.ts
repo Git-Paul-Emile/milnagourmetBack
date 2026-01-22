@@ -29,9 +29,10 @@ declare class CartService {
         cereales?: string[];
     }): Promise<void>;
     removeCustomCreation(utilisateurId: number, creationId: number): Promise<void>;
-    checkout(utilisateurId: number): Promise<{
+    checkout(utilisateurId: number, pointsToUse?: number): Promise<{
         orderId: number;
         totalAmount: number;
+        discountAmount?: number;
     }>;
 }
 declare const _default: CartService;

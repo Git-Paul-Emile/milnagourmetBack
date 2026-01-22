@@ -149,5 +149,24 @@ export class LoyaltyService {
             return 0;
         return this.MIN_POINTS_FOR_DISCOUNT - points;
     }
+    /**
+     * Met à jour l'historique des points avec l'ID de commande
+     */
+    static async updatePointsHistoryWithOrderId(userId, orderId, pointsUsed) {
+        await prisma.historiquePoints.updateMany({
+            where: {
+                utilisateurId: userId,
+                type: 'UTILISATION',
+                commandeId: null,
+                points: -pointsUsed, // Négatif pour les utilisations
+                creeLe: {
+                    gte: new Date(Date.now() - 60000) // Dans la dernière minute
+                }
+            },
+            data: {
+                commandeId: orderId
+            }
+        });
+    }
 }
 //# sourceMappingURL=loyalty.service.js.map

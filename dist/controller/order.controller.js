@@ -140,7 +140,7 @@ class OrderController {
                 nomClient: orderData.customer?.name || 'Client anonyme',
                 telephoneClient: orderData.customer?.phone || 'Non spécifié',
                 statut: 'RECU', // Forcer le statut RECU par défaut
-                montantTotal: orderData.total,
+                montantTotal: orderData.total, // Le total incluant les frais de livraison et les réductions
                 fraisLivraison: orderData.deliveryFee || 0,
                 notes: orderData.notes || '',
                 elements: products.map(item => ({
@@ -204,10 +204,24 @@ class OrderController {
                 const cartService = (await import('../services/cart.service.js')).default;
                 await cartService.clearCart(dbOrderData.utilisateurId);
                 console.log('[ORDER CREATION] Panier vidé avec succès');
-                // Ajouter les points de fidélité
+                // Utiliser les points de fidélité si fournis
+                if (orderData.pointsUsed && orderData.pointsUsed > 0) {
+                    try {
+                        console.log('[ORDER CREATION] Utilisation des points de fidélité:', orderData.pointsUsed);
+                        await LoyaltyService.usePoints(dbOrderData.utilisateurId, orderData.pointsUsed, order.id);
+                        console.log('[ORDER CREATION] Points de fidélité utilisés avec succès');
+                    }
+                    catch (error) {
+                        console.error('[ORDER CREATION] Erreur lors de l\'utilisation des points de fidélité:', error);
+                        // Ne pas échouer la commande pour une erreur de fidélité
+                    }
+                }
+                // Ajouter les points de fidélité gagnés
                 try {
                     console.log('[ORDER CREATION] Ajout des points de fidélité pour l\'utilisateur:', dbOrderData.utilisateurId);
-                    await LoyaltyService.addPoints(dbOrderData.utilisateurId, order.id, dbOrderData.montantTotal);
+                    // Ne pas ajouter de points sur le montant déjà réduit - ajouter sur le montant original
+                    const originalAmount = orderData.total + (orderData.deliveryFee || 0);
+                    await LoyaltyService.addPoints(dbOrderData.utilisateurId, order.id, originalAmount);
                     console.log('[ORDER CREATION] Points de fidélité ajoutés avec succès');
                 }
                 catch (error) {
