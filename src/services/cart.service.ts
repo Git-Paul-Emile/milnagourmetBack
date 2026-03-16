@@ -251,8 +251,11 @@ class CartService {
       // Appliquer la remise fidélité si demandée
       let discountAmount = 0;
       if (pointsToUse > 0) {
-        discountAmount = await LoyaltyService.usePoints(utilisateurId, pointsToUse);
-        totalAmount -= discountAmount;
+        // Limiter les points utilisés à ce qui est nécessaire pour couvrir le panier
+        const maxPointsNeeded = Math.ceil(LoyaltyService.cfaToPoints(totalAmount));
+        const effectivePointsToUse = Math.min(pointsToUse, maxPointsNeeded);
+        discountAmount = await LoyaltyService.usePoints(utilisateurId, effectivePointsToUse);
+        totalAmount = Math.max(0, totalAmount - discountAmount);
       }
 
       // Créer la commande

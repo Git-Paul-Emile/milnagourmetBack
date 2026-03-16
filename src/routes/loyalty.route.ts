@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, type IRouter } from 'express';
 import loyaltyController from '../controller/loyalty.controller.js';
 import { authenticateToken } from '../utils/auth.middleware.js';
 
-const router = Router();
+const router: IRouter = Router();
 
 // Toutes les routes de fidélité nécessitent une authentification
 router.use(authenticateToken);

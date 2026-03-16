@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url = env("DATABASE_URL")
 }
 
@@ -372,7 +372,7 @@ model Temoinage {
   lieu        String
   note        Int
   commentaire String   @db.Text
-  avatar      String?  @db.LongText
+  avatar      String?  @db.Text
   date        DateTime
   active      Boolean  @default(true)
 
