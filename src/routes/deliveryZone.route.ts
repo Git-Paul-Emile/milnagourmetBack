@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import deliveryZoneController from '../controller/deliveryZone.controller.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
+import validateResource from '../middleware/validateResource.js';
+import { createDeliveryZoneSchema, updateDeliveryZoneSchema } from '../validator/deliveryZone.schema.js';
 
 const router: Router = Router();
 
@@ -9,8 +11,8 @@ router.get('/', deliveryZoneController.getAll);
 router.get('/active', deliveryZoneController.getAllActive);
 router.get('/with-orders', deliveryZoneController.getAllWithOrderCounts);
 router.get('/:id', deliveryZoneController.getById);
-router.post('/', requireAdmin, deliveryZoneController.create);
-router.put('/:id', requireAdmin, deliveryZoneController.update);
+router.post('/', requireAdmin, validateResource(createDeliveryZoneSchema), deliveryZoneController.create);
+router.put('/:id', requireAdmin, validateResource(updateDeliveryZoneSchema), deliveryZoneController.update);
 router.delete('/:id', requireAdmin, deliveryZoneController.delete);
 
 export default router;

@@ -1,12 +1,28 @@
 import productRepository from '../repository/product.repository.js';
+import type { ProductListOptions } from '../repository/product.repository.js';
 import type { Produit } from '@prisma/client';
 import type { ProductCreate, ProductUpdate } from '../validator/product.schema.js';
 import { ProductCreateSchema, ProductUpdateSchema } from '../validator/product.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
+
+// Format du produit tel qu'exposé au frontend (voir transformProduct)
+export interface ProductDTO {
+  id: string;
+  name: string;
+  category: string;
+  categoryId?: string;
+  price: number;
+  description: string;
+  image: string;
+  available: boolean;
+}
 
 class ProductService {
   private productRepository = productRepository;
 
-  async create(data: ProductCreate): Promise<any> {
+  async create(data: ProductCreate): Promise<ProductDTO> {
     try {
       // Validation des données
       const validatedData = ProductCreateSchema.parse(data);
@@ -18,26 +34,28 @@ class ProductService {
       return this.transformProduct(product);
     } catch (error) {
       console.error('Erreur dans le service lors de la création du produit:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
 
-  async findAll(): Promise<any[]> {
+  async findAll(options: ProductListOptions = {}): Promise<{ items: ProductDTO[]; total: number }> {
     try {
-      const products = await productRepository.findAll();
-      console.log(`${products.length} produits récupérés`);
+      const { items: products, total } = await productRepository.findAll(options);
 
       // Transformer les données pour correspondre à l'interface front-end
-      const transformedProducts = products.map(product => this.transformProduct(product));
+      const items = products.map(product => this.transformProduct(product));
 
-      return transformedProducts;
+      return { items, total };
     } catch (error) {
       console.error('Erreur dans le service lors de la récupération des produits:', error);
       throw error;
     }
   }
 
-  async findById(id: number): Promise<any | null> {
+  async findById(id: number): Promise<ProductDTO | null> {
     try {
       const product = await productRepository.findById(id);
       if (!product) {
@@ -52,7 +70,7 @@ class ProductService {
     }
   }
 
-  async update(id: number, data: ProductUpdate): Promise<any> {
+  async update(id: number, data: ProductUpdate): Promise<ProductDTO> {
     try {
       // Validation des données
       const validatedData = ProductUpdateSchema.parse(data);
@@ -60,7 +78,7 @@ class ProductService {
       // Vérifier si le produit existe
       const existingProduct = await productRepository.findById(id);
       if (!existingProduct) {
-        throw new Error('Produit non trouvé');
+        throw new AppError('Produit non trouvé', StatusCodes.NOT_FOUND);
       }
 
       const product = await productRepository.update(id, validatedData);
@@ -70,16 +88,19 @@ class ProductService {
       return this.transformProduct(product);
     } catch (error) {
       console.error('Erreur dans le service lors de la mise à jour du produit:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
 
-  async delete(id: number): Promise<any> {
+  async delete(id: number): Promise<ProductDTO> {
     try {
       // Vérifier si le produit existe
       const existingProduct = await productRepository.findById(id);
       if (!existingProduct) {
-        throw new Error('Produit non trouvé');
+        throw new AppError('Produit non trouvé', StatusCodes.NOT_FOUND);
       }
 
       const product = await productRepository.delete(id);
@@ -91,7 +112,7 @@ class ProductService {
     }
   }
 
-  private transformProduct(product: Produit & { categorieProduit?: { nom: string } | null }): any {
+  private transformProduct(product: Produit & { categorieProduit?: { nom: string } | null }): ProductDTO {
     // Utiliser le code de la catégorie en minuscules
     const categoryName = String(product.categorie).toLowerCase();
 

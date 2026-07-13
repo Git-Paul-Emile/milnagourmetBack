@@ -12,6 +12,14 @@ declare class CartService {
         price: number;
         quantity: number;
         image?: string;
+        customCreation?: {
+            size: {
+                id: number;
+            };
+            selectedFruits?: string[];
+            selectedSauces?: string[];
+            selectedCereales?: string[];
+        };
     }[]): Promise<void>;
     addCustomCreation(utilisateurId: number, creationData: {
         tailleId: number;

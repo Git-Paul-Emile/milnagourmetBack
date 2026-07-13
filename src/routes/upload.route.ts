@@ -38,7 +38,7 @@ router.get('/images', requireAdmin, uploadController.listImages);
 // Récupérer les images utilisées (ADMIN)
 router.get('/used-images', authenticateToken, uploadController.getUsedImages);
 
-// Supprimer une image (ADMIN)
-router.delete('/images/:folder/:filename', requireAdmin, uploadController.deleteImage);
+// Supprimer une image (ADMIN) - ?publicId=milnagourmet/<dossier>/<nom>
+router.delete('/images', requireAdmin, uploadController.deleteImage);
 
 export default router;

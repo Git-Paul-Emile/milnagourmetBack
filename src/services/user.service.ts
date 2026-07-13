@@ -1,33 +1,61 @@
 import userRepository from '../repository/user.repository.js';
+import type { UserListOptions } from '../repository/user.repository.js';
+import type { Utilisateur } from '@prisma/client';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+
+export interface UserDTO {
+  id: string;
+  name: string;
+  phone: string;
+  deliveryZoneId: string;
+  role: 'user' | 'admin' | 'delivery';
+  blocked: boolean;
+  createdAt: Date;
+  orders: {
+    id: string;
+    status: 'RECU' | 'LIVREE' | 'ANNULEE';
+    total: number;
+    date: string;
+    items: never[];
+    notes: string;
+    customer: null;
+  }[];
+}
 
 class UserService {
-  async getAllUsers() {
+  async getAllUsers(options: UserListOptions = {}): Promise<{ items: UserDTO[]; total: number }> {
     try {
-      const users = await userRepository.findAll();
+      const { items: users, total } = await userRepository.findAll(options);
 
       // Convertir vers le format attendu par le frontend
-      return users.map(user => ({
-        id: user.id.toString(),
-        name: user.nomComplet,
-        phone: user.telephone,
-        deliveryZoneId: user.zoneLivraisonId?.toString() || '',
-        role: (user.role?.toLowerCase() as 'user' | 'admin' | 'delivery') || 'user',
-        blocked: Boolean(user.blocked),
-        createdAt: user.createdAt,
-        orders: (user as any).commandes.map((cmd: any) => ({
-          id: cmd.id.toString(),
-          status: cmd.statut as 'RECU' | 'LIVREE' | 'ANNULEE',
-          total: cmd.montantTotal,
-          date: cmd.creeLe.toISOString(),
-          items: [],
-          notes: '',
-          customer: null
-        }))
-      }));
+      const items = users.map((user) => this.transformUser(user));
+      return { items, total };
     } catch (error) {
       console.error('Erreur dans le service lors de la récupération des utilisateurs:', error);
       throw error;
     }
+  }
+
+  private transformUser(user: Utilisateur & { commandes: { id: number; statut: string; montantTotal: number; creeLe: Date }[] }): UserDTO {
+    return {
+      id: user.id.toString(),
+      name: user.nomComplet,
+      phone: user.telephone,
+      deliveryZoneId: user.zoneLivraisonId?.toString() || '',
+      role: (user.role?.toLowerCase() as 'user' | 'admin' | 'delivery') || 'user',
+      blocked: Boolean(user.blocked),
+      createdAt: user.createdAt,
+      orders: user.commandes.map((cmd) => ({
+        id: cmd.id.toString(),
+        status: cmd.statut as 'RECU' | 'LIVREE' | 'ANNULEE',
+        total: cmd.montantTotal,
+        date: cmd.creeLe.toISOString(),
+        items: [],
+        notes: '',
+        customer: null
+      }))
+    };
   }
 
   async updateUser(id: string, data: Partial<{ blocked: boolean; deliveryZoneId: string }>) {
@@ -35,10 +63,10 @@ class UserService {
       // Vérifier si l'utilisateur existe
       const existingUser = await userRepository.findById(id);
       if (!existingUser) {
-        throw new Error('Utilisateur non trouvé');
+        throw new AppError('Utilisateur non trouvé', StatusCodes.NOT_FOUND);
       }
 
-      const payload: any = {};
+      const payload: Partial<Utilisateur> = {};
       if (data.blocked !== undefined) {
         payload.blocked = data.blocked;
       }

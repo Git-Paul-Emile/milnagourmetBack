@@ -1,6 +1,5 @@
-import twilio from 'twilio';
 import { env } from '../config/env.js';
-const client = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
+const D360_BASE_URL = env.D360_BASE_URL;
 export class WhatsAppService {
     static async sendOrderNotification(order) {
         try {
@@ -9,17 +8,80 @@ export class WhatsAppService {
                 console.warn('Numéro WhatsApp du vendeur non configuré');
                 return;
             }
+            if (!env.D360_API_KEY) {
+                console.warn('Clé API 360dialog non configurée, notification WhatsApp ignorée');
+                return;
+            }
             const message = `🔔 Nouvelle commande reçue !\n\nClient : ${order.nomClient}\nTéléphone: ${order.telephoneClient}\n\nDétails de la commande :\n${this.formatOrderDetails(order)}\nVeuillez traiter cette commande rapidement.`;
-            await client.messages.create({
-                from: env.TWILIO_WHATSAPP_NUMBER,
-                to: vendorNumber,
-                body: message,
-            });
+            await this.sendMessage(vendorNumber, message);
             console.log('Notification WhatsApp envoyée au vendeur pour la commande', order.numeroCommande);
         }
         catch (error) {
             console.error('Erreur lors de l\'envoi de la notification WhatsApp :', error);
             throw new Error('Échec de l\'envoi de la notification WhatsApp');
+        }
+    }
+    // Notifie le client par WhatsApp quand une commande est marquée livrée ou annulée
+    static async sendCustomerStatusNotification(order, status) {
+        try {
+            const phone = order.utilisateur?.telephone || order.telephoneClient;
+            if (!phone) {
+                console.warn('Numéro de téléphone du client introuvable, notification ignorée');
+                return;
+            }
+            if (!env.D360_API_KEY) {
+                console.warn('Clé API 360dialog non configurée, notification client ignorée');
+                return;
+            }
+            const message = status === 'LIVREE'
+                ? `✅ Votre commande ${order.numeroCommande} a été livrée. Merci pour votre confiance !\n\nMontant total : ${order.montantTotal} FCFA\n\n🍯 Milna Gourmet`
+                : `❌ Votre commande ${order.numeroCommande} a été annulée.\n\nPour toute question, contactez-nous.\n\n🍯 Milna Gourmet`;
+            await this.sendMessage(phone, message);
+            console.log(`Notification WhatsApp client envoyée pour la commande ${order.numeroCommande} (${status})`);
+        }
+        catch (error) {
+            console.error('Erreur lors de l\'envoi de la notification client WhatsApp :', error);
+            throw new Error('Échec de l\'envoi de la notification client WhatsApp');
+        }
+    }
+    // Envoie un message WhatsApp via l'API 360dialog (compatible WhatsApp Cloud API).
+    // Note : en dehors d'une fenêtre de conversation de 24h, WhatsApp exige un template
+    // pré-approuvé plutôt qu'un message texte libre. Si D360_TEMPLATE_NAME est défini,
+    // ce template est utilisé ; sinon un message texte libre est envoyé.
+    static async sendMessage(to, body) {
+        const payload = env.D360_TEMPLATE_NAME
+            ? {
+                messaging_product: 'whatsapp',
+                to,
+                type: 'template',
+                template: {
+                    name: env.D360_TEMPLATE_NAME,
+                    language: { code: env.D360_TEMPLATE_LANG },
+                    components: [
+                        {
+                            type: 'body',
+                            parameters: [{ type: 'text', text: body }]
+                        }
+                    ]
+                }
+            }
+            : {
+                messaging_product: 'whatsapp',
+                to,
+                type: 'text',
+                text: { body }
+            };
+        const response = await fetch(`${D360_BASE_URL}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'D360-API-KEY': env.D360_API_KEY
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const errorBody = await response.text();
+            throw new Error(`Échec de l'appel API 360dialog (${response.status}): ${errorBody}`);
         }
     }
     static formatOrderDetails(order) {

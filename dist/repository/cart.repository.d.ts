@@ -1,4 +1,4 @@
-import type { Panier, ElementPanier, Produit } from '@prisma/client';
+import type { Panier, ElementPanier, Produit, CreationPanier } from '@prisma/client';
 export interface ElementPanierWithProduit extends ElementPanier {
     produit?: Produit | null;
 }
@@ -12,6 +12,7 @@ export interface CreationPanierData {
     sauces?: string | null;
     cereales?: string | null;
     taille?: {
+        id: number;
         nom: string;
         prix: number;
         maxFruits: number;
@@ -53,23 +54,29 @@ declare class CartRepository {
         fruits?: string[];
         sauces?: string[];
         cereales?: string[];
-    }): Promise<any>;
+    }): Promise<CreationPanier>;
     updateCreation(id: number, data: {
         quantite?: number;
         prix?: number;
         fruits?: string[];
         sauces?: string[];
         cereales?: string[];
-    }): Promise<any>;
+    }): Promise<CreationPanierData>;
     removeCreation(id: number): Promise<void>;
-    findCreationById(id: number): Promise<any>;
     mergeGuestCart(utilisateurId: number, guestItems: {
         id: string;
         name: string;
         price: number;
         quantity: number;
         image?: string;
-        customCreation?: any;
+        customCreation?: {
+            size: {
+                id: number;
+            };
+            selectedFruits?: string[];
+            selectedSauces?: string[];
+            selectedCereales?: string[];
+        };
     }[]): Promise<void>;
 }
 declare const _default: CartRepository;

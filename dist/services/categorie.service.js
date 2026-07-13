@@ -1,5 +1,8 @@
 import categorieRepository from '../repository/categorie.repository.js';
 import { ProductCategoryCreateSchema, ProductCategoryUpdateSchema } from '../validator/categorie.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 class CategorieService {
     categorieRepository = categorieRepository;
     async create(data) {
@@ -10,7 +13,7 @@ class CategorieService {
             const existingCategories = await categorieRepository.findAll();
             const duplicate = existingCategories.find(cat => cat.nom.toLowerCase() === validatedData.nom.toLowerCase());
             if (duplicate) {
-                throw new Error('Une catégorie avec ce nom existe déjà');
+                throw new AppError('Une catégorie avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
             }
             const categorie = await categorieRepository.create(validatedData);
             console.log(`Catégorie créée avec succès: ${categorie.nom}`);
@@ -25,6 +28,9 @@ class CategorieService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la création de la catégorie:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -33,14 +39,13 @@ class CategorieService {
             const categories = await categorieRepository.findAll();
             console.log(`${categories.length} catégories récupérées`);
             // Transformer les données pour correspondre à l'interface front-end
-            const transformedCategories = categories.map(cat => ({
+            return categories.map(cat => ({
                 id: cat.id,
                 name: cat.nom,
                 description: cat.description,
                 active: cat.active,
                 createdAt: cat.creeLe.toISOString()
             }));
-            return transformedCategories;
         }
         catch (error) {
             console.error('Erreur dans le service lors de la récupération des catégories:', error);
@@ -69,14 +74,14 @@ class CategorieService {
             // Vérifier si la catégorie existe
             const existingCategorie = await categorieRepository.findById(id);
             if (!existingCategorie) {
-                throw new Error('Catégorie non trouvée');
+                throw new AppError('Catégorie non trouvée', StatusCodes.NOT_FOUND);
             }
             // Vérifier si le nouveau nom n'est pas déjà utilisé par une autre catégorie
             if (validatedData.nom) {
                 const allCategories = await categorieRepository.findAll();
                 const duplicate = allCategories.find(cat => cat.nom.toLowerCase() === validatedData.nom.toLowerCase() && cat.id !== id);
                 if (duplicate) {
-                    throw new Error('Une catégorie avec ce nom existe déjà');
+                    throw new AppError('Une catégorie avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
                 }
             }
             const categorie = await categorieRepository.update(id, validatedData);
@@ -92,6 +97,9 @@ class CategorieService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la mise à jour de la catégorie:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -100,7 +108,7 @@ class CategorieService {
             // Vérifier si la catégorie existe
             const existingCategorie = await categorieRepository.findById(id);
             if (!existingCategorie) {
-                throw new Error('Catégorie non trouvée');
+                throw new AppError('Catégorie non trouvée', StatusCodes.NOT_FOUND);
             }
             const categorie = await categorieRepository.delete(id);
             console.log(`Catégorie supprimée avec succès: ${categorie.nom}`);

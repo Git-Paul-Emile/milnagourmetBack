@@ -1,3 +1,12 @@
+export interface LoyaltyHistoryEntryDTO {
+    id: number;
+    type: string;
+    points: number;
+    amount: number;
+    description: string;
+    orderNumber?: string;
+    date: Date;
+}
 export declare class LoyaltyService {
     private static readonly CFA_PER_POINT;
     private static readonly POINTS_PER_CFA;
@@ -33,7 +42,7 @@ export declare class LoyaltyService {
     /**
      * Récupère l'historique des points d'un utilisateur
      */
-    static getUserPointsHistory(userId: number): Promise<any[]>;
+    static getUserPointsHistory(userId: number): Promise<LoyaltyHistoryEntryDTO[]>;
     /**
      * Calcule le pourcentage de progression vers le seuil
      */

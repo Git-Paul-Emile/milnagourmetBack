@@ -1,4 +1,6 @@
 import deliveryZoneRepository from '../repository/deliveryZone.repository.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
 
 class DeliveryZoneService {
   async getAllDeliveryZones() {
@@ -6,7 +8,7 @@ class DeliveryZoneService {
       const zones = await deliveryZoneRepository.findAll();
 
       // Convertir vers le format attendu par le frontend
-      return zones.map((zone: any) => ({
+      return zones.map((zone) => ({
         id: zone.id.toString(),
         name: zone.nom,
         deliveryFee: zone.fraisLivraison,
@@ -24,7 +26,7 @@ class DeliveryZoneService {
       const zones = await deliveryZoneRepository.findAllActive();
 
       // Convertir vers le format attendu par le frontend
-      return zones.map((zone: any) => ({
+      return zones.map((zone) => ({
         id: zone.id.toString(),
         name: zone.nom,
         deliveryFee: zone.fraisLivraison,
@@ -62,7 +64,7 @@ class DeliveryZoneService {
       const zone = await deliveryZoneRepository.findById(id);
 
       if (!zone) {
-        throw new Error('Zone de livraison non trouvée');
+        throw new AppError('Zone de livraison non trouvée', StatusCodes.NOT_FOUND);
       }
 
       return {

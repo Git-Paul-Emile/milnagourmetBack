@@ -1,4 +1,6 @@
 import deliveryPersonRepository from '../repository/deliveryPerson.repository.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
 
 class DeliveryPersonService {
   async getAllDeliveryPersons() {
@@ -6,14 +8,14 @@ class DeliveryPersonService {
       const deliveryPersons = await deliveryPersonRepository.findAll();
 
       // Convertir vers le format attendu par le frontend
-      return deliveryPersons.map((person: any) => ({
+      return deliveryPersons.map((person) => ({
         id: person.id.toString(),
         nomComplet: person.nomComplet,
         phone: person.telephone,
         vehicle: person.vehicule,
         active: person.active,
         createdAt: person.creeLe,
-        commandes: person.commandes.map((cmd: any) => ({
+        commandes: person.commandes.map((cmd) => ({
           id: cmd.id.toString(),
           statut: cmd.statut,
           montantTotal: cmd.montantTotal,
@@ -31,7 +33,7 @@ class DeliveryPersonService {
       const person = await deliveryPersonRepository.findById(id);
 
       if (!person) {
-        throw new Error('Livreur non trouvé');
+        throw new AppError('Livreur non trouvé', StatusCodes.NOT_FOUND);
       }
 
       return {

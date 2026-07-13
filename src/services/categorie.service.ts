@@ -2,11 +2,23 @@ import categorieRepository from '../repository/categorie.repository.js';
 import type { CategorieProduitItem } from '@prisma/client';
 import type { ProductCategoryCreate, ProductCategoryUpdate } from '../validator/categorie.schema.js';
 import { ProductCategoryCreateSchema, ProductCategoryUpdateSchema } from '../validator/categorie.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
+
+// Format de la catégorie tel qu'exposé au frontend
+export interface CategorieDTO {
+  id: number;
+  name: string;
+  description: string | null;
+  active: boolean;
+  createdAt: string;
+}
 
 class CategorieService {
   private categorieRepository = categorieRepository;
 
-  async create(data: ProductCategoryCreate): Promise<CategorieProduitItem> {
+  async create(data: ProductCategoryCreate): Promise<CategorieDTO> {
     try {
       // Validation des données
       const validatedData = ProductCategoryCreateSchema.parse(data);
@@ -18,7 +30,7 @@ class CategorieService {
       );
 
       if (duplicate) {
-        throw new Error('Une catégorie avec ce nom existe déjà');
+        throw new AppError('Une catégorie avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
       }
 
       const categorie = await categorieRepository.create(validatedData);
@@ -31,28 +43,29 @@ class CategorieService {
         description: categorie.description,
         active: categorie.active,
         createdAt: categorie.creeLe.toISOString()
-      } as any;
+      };
     } catch (error) {
       console.error('Erreur dans le service lors de la création de la catégorie:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
 
-  async findAll(): Promise<CategorieProduitItem[]> {
+  async findAll(): Promise<CategorieDTO[]> {
     try {
       const categories = await categorieRepository.findAll();
       console.log(`${categories.length} catégories récupérées`);
 
       // Transformer les données pour correspondre à l'interface front-end
-      const transformedCategories = categories.map(cat => ({
+      return categories.map(cat => ({
         id: cat.id,
         name: cat.nom,
         description: cat.description,
         active: cat.active,
         createdAt: cat.creeLe.toISOString()
       }));
-
-      return transformedCategories as any;
     } catch (error) {
       console.error('Erreur dans le service lors de la récupération des catégories:', error);
       throw error;
@@ -74,7 +87,7 @@ class CategorieService {
     }
   }
 
-  async update(id: number, data: ProductCategoryUpdate): Promise<CategorieProduitItem> {
+  async update(id: number, data: ProductCategoryUpdate): Promise<CategorieDTO> {
     try {
       // Validation des données
       const validatedData = ProductCategoryUpdateSchema.parse(data);
@@ -82,7 +95,7 @@ class CategorieService {
       // Vérifier si la catégorie existe
       const existingCategorie = await categorieRepository.findById(id);
       if (!existingCategorie) {
-        throw new Error('Catégorie non trouvée');
+        throw new AppError('Catégorie non trouvée', StatusCodes.NOT_FOUND);
       }
 
       // Vérifier si le nouveau nom n'est pas déjà utilisé par une autre catégorie
@@ -93,7 +106,7 @@ class CategorieService {
         );
 
         if (duplicate) {
-          throw new Error('Une catégorie avec ce nom existe déjà');
+          throw new AppError('Une catégorie avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
         }
       }
 
@@ -107,9 +120,12 @@ class CategorieService {
         description: categorie.description,
         active: categorie.active,
         createdAt: categorie.creeLe.toISOString()
-      } as any;
+      };
     } catch (error) {
       console.error('Erreur dans le service lors de la mise à jour de la catégorie:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
@@ -119,7 +135,7 @@ class CategorieService {
       // Vérifier si la catégorie existe
       const existingCategorie = await categorieRepository.findById(id);
       if (!existingCategorie) {
-        throw new Error('Catégorie non trouvée');
+        throw new AppError('Catégorie non trouvée', StatusCodes.NOT_FOUND);
       }
 
       const categorie = await categorieRepository.delete(id);

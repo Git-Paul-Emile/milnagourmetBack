@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import type { Panier, ElementPanier, Produit } from '@prisma/client';
+import type { Panier, ElementPanier, Produit, CreationPanier } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -17,6 +17,7 @@ export interface CreationPanierData {
   sauces?: string | null;
   cereales?: string | null;
   taille?: {
+    id: number;
     nom: string;
     prix: number;
     maxFruits: number;
@@ -70,13 +71,10 @@ class CartRepository {
 
     if (!cart) return null;
 
-    // Récupérer les créations personnalisées avec une requête SQL brute
-    const creations = await this.prisma.$queryRaw`
-      SELECT cc.*, t.nom as taille_nom, t.prix as taille_prix, t.maxFruits, t.maxSauces
-      FROM cart_creations cc
-      LEFT JOIN creation_sizes t ON cc.tailleId = t.id
-      WHERE cc.panierId = ${cart.id}
-    ` as any[];
+    const creations = await this.prisma.creationPanier.findMany({
+      where: { panierId: cart.id },
+      include: { taille: true }
+    });
 
     return {
       ...cart,
@@ -89,12 +87,12 @@ class CartRepository {
         fruits: c.fruits,
         sauces: c.sauces,
         cereales: c.cereales,
-        taille: c.taille_nom ? {
-          id: c.tailleId,
-          nom: c.taille_nom,
-          prix: c.taille_prix,
-          maxFruits: c.maxFruits,
-          maxSauces: c.maxSauces
+        taille: c.taille ? {
+          id: c.taille.id,
+          nom: c.taille.nom,
+          prix: c.taille.prix,
+          maxFruits: c.taille.maxFruits,
+          maxSauces: c.taille.maxSauces
         } : null
       }))
     } as CartWithItems;
@@ -145,10 +143,9 @@ class CartRepository {
       where: { panierId }
     });
 
-    // Supprimer aussi les créations personnalisées
-    await this.prisma.$queryRaw`
-      DELETE FROM cart_creations WHERE panierId = ${panierId}
-    `;
+    await this.prisma.creationPanier.deleteMany({
+      where: { panierId }
+    });
   }
 
   // Méthodes pour les créations personnalisées dans le panier
@@ -162,31 +159,18 @@ class CartRepository {
     fruits?: string[];
     sauces?: string[];
     cereales?: string[];
-  }): Promise<any> {
-    // Utiliser une requête SQL brute car la table peut ne pas être connue par Prisma
-    const result = await this.prisma.$queryRaw`
-      INSERT INTO cart_creations (panierId, tailleId, quantite, prix, fruits, sauces, cereales)
-      VALUES (${data.panierId}, ${data.tailleId}, ${data.quantite}, ${data.prix},
-              ${data.fruits ? JSON.stringify(data.fruits) : null},
-              ${data.sauces ? JSON.stringify(data.sauces) : null},
-              ${data.cereales ? JSON.stringify(data.cereales) : null})
-    `;
-
-    // Récupérer l'ID généré
-    const [inserted] = await this.prisma.$queryRaw`
-      SELECT LAST_INSERT_ID() as id
-    ` as any[];
-
-    return {
-      id: inserted.id,
-      panierId: data.panierId,
-      tailleId: data.tailleId,
-      quantite: data.quantite,
-      prix: data.prix,
-      fruits: data.fruits ? JSON.stringify(data.fruits) : null,
-      sauces: data.sauces ? JSON.stringify(data.sauces) : null,
-      cereales: data.cereales ? JSON.stringify(data.cereales) : null
-    };
+  }): Promise<CreationPanier> {
+    return await this.prisma.creationPanier.create({
+      data: {
+        panierId: data.panierId,
+        tailleId: data.tailleId,
+        quantite: data.quantite,
+        prix: data.prix,
+        fruits: data.fruits ? JSON.stringify(data.fruits) : null,
+        sauces: data.sauces ? JSON.stringify(data.sauces) : null,
+        cereales: data.cereales ? JSON.stringify(data.cereales) : null
+      }
+    });
   }
 
   // Mettre à jour une création personnalisée dans le panier
@@ -196,48 +180,21 @@ class CartRepository {
     fruits?: string[];
     sauces?: string[];
     cereales?: string[];
-  }): Promise<any> {
-    const updateFields: string[] = [];
-    const values: any[] = [];
+  }): Promise<CreationPanierData> {
+    const updateData: Record<string, unknown> = {};
+    if (data.quantite !== undefined) updateData.quantite = data.quantite;
+    if (data.prix !== undefined) updateData.prix = data.prix;
+    if (data.fruits !== undefined) updateData.fruits = data.fruits ? JSON.stringify(data.fruits) : null;
+    if (data.sauces !== undefined) updateData.sauces = data.sauces ? JSON.stringify(data.sauces) : null;
+    if (data.cereales !== undefined) updateData.cereales = data.cereales ? JSON.stringify(data.cereales) : null;
 
-    if (data.quantite !== undefined) {
-      updateFields.push('quantite = ?');
-      values.push(data.quantite);
-    }
-    if (data.prix !== undefined) {
-      updateFields.push('prix = ?');
-      values.push(data.prix);
-    }
-    if (data.fruits !== undefined) {
-      updateFields.push('fruits = ?');
-      values.push(data.fruits ? JSON.stringify(data.fruits) : null);
-    }
-    if (data.sauces !== undefined) {
-      updateFields.push('sauces = ?');
-      values.push(data.sauces ? JSON.stringify(data.sauces) : null);
-    }
-    if (data.cereales !== undefined) {
-      updateFields.push('cereales = ?');
-      values.push(data.cereales ? JSON.stringify(data.cereales) : null);
-    }
+    const updated = await this.prisma.creationPanier.update({
+      where: { id },
+      data: updateData,
+      include: { taille: true }
+    });
 
-    if (updateFields.length > 0) {
-      values.push(id);
-      await this.prisma.$queryRawUnsafe(
-        `UPDATE cart_creations SET ${updateFields.join(', ')} WHERE id = ?`,
-        ...values
-      );
-    }
-
-    // Récupérer la création mise à jour
-    const [updated] = await this.prisma.$queryRaw`
-      SELECT cc.*, t.nom as taille_nom, t.prix as taille_prix, t.maxFruits, t.maxSauces
-      FROM cart_creations cc
-      LEFT JOIN creation_sizes t ON cc.tailleId = t.id
-      WHERE cc.id = ${id}
-    ` as any[];
-
-    return updated ? {
+    return {
       id: updated.id,
       panierId: updated.panierId,
       tailleId: updated.tailleId,
@@ -246,31 +203,23 @@ class CartRepository {
       fruits: updated.fruits,
       sauces: updated.sauces,
       cereales: updated.cereales,
-      taille: updated.taille_nom ? {
-        id: updated.tailleId,
-        nom: updated.taille_nom,
-        prix: updated.taille_prix,
-        maxFruits: updated.maxFruits,
-        maxSauces: updated.maxSauces
+      taille: updated.taille ? {
+        id: updated.taille.id,
+        nom: updated.taille.nom,
+        prix: updated.taille.prix,
+        maxFruits: updated.taille.maxFruits,
+        maxSauces: updated.taille.maxSauces
       } : null
-    } : null;
+    };
   }
 
   // Supprimer une création personnalisée du panier
   async removeCreation(id: number): Promise<void> {
-    await this.prisma.$queryRaw`
-      DELETE FROM cart_creations WHERE id = ${id}
-    `;
-  }
-
-  // Trouver une création personnalisée par ID
-  async findCreationById(id: number): Promise<any> {
-    // Temporairement désactivé car la table n'existe pas encore
-    return null;
+    await this.prisma.creationPanier.delete({ where: { id } });
   }
 
   // Fusionner un panier guest avec le panier utilisateur
-  async mergeGuestCart(utilisateurId: number, guestItems: { id: string; name: string; price: number; quantity: number; image?: string; customCreation?: any }[]): Promise<void> {
+  async mergeGuestCart(utilisateurId: number, guestItems: { id: string; name: string; price: number; quantity: number; image?: string; customCreation?: { size: { id: number }; selectedFruits?: string[]; selectedSauces?: string[]; selectedCereales?: string[] } }[]): Promise<void> {
     // Récupérer ou créer le panier utilisateur
     let cart = await this.findByUserId(utilisateurId);
     if (!cart) {
@@ -284,11 +233,26 @@ class CartRepository {
     // Traiter chaque élément du panier guest
    for (const guestItem of guestItems) {
      // Vérifier si c'est une création personnalisée
-     if (guestItem.id.includes('creation')) {
-       // C'est une création personnalisée
-       // Pour l'instant, on ne fusionne pas les créations personnalisées du panier guest
-       // car elles nécessiteraient une reconstruction complète des données
-       console.log(`Création personnalisée dans le panier guest ignorée: ${guestItem.name}`);
+     if (guestItem.customCreation?.size?.id) {
+       // Résoudre la taille et son prix officiel depuis la base (jamais celui envoyé par le client)
+       const taille = await this.prisma.tailleCreation.findUnique({
+         where: { id: guestItem.customCreation.size.id }
+       });
+
+       if (!taille || !taille.active) {
+         console.warn(`Taille de création invalide dans le panier guest, ignorée: ${guestItem.name}`);
+         continue;
+       }
+
+       await this.addCreation({
+         panierId: cart.id,
+         tailleId: taille.id,
+         quantite: guestItem.quantity,
+         prix: taille.prix,
+         fruits: guestItem.customCreation.selectedFruits,
+         sauces: guestItem.customCreation.selectedSauces,
+         cereales: guestItem.customCreation.selectedCereales
+       });
        continue;
      }
 

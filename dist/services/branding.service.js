@@ -1,19 +1,15 @@
 import { prisma } from '../config/database.js';
-import { AppError } from '../utils/AppError.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import cloudinary from '../config/cloudinary.js';
 import themeService from './theme.service.js';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const DEFAULT_LOGO = cloudinary.url('milnagourmet/logos/milna-logo.png', { secure: true });
 class BrandingService {
     async getBranding() {
         try {
-            let logo = '/uploads/logos/milna-logo.png';
+            let logo = DEFAULT_LOGO;
             // Vérifier s'il y a un logo personnalisé dans la base de données
             const branding = await prisma.marque.findFirst();
-            if (branding && branding.logo && branding.logo.startsWith('/uploads/logos/') && branding.logo !== '/uploads/logos/milna-logo.png') {
-                // Si c'est un logo uploadé personnalisé (différent du logo classique par défaut), l'utiliser
+            if (branding && branding.logo && branding.logo !== DEFAULT_LOGO) {
+                // Si c'est un logo personnalisé (différent du logo classique par défaut), l'utiliser
                 logo = branding.logo;
             }
             return {

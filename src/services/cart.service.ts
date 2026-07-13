@@ -135,7 +135,7 @@ class CartService {
   }
 
   // Fusionner le panier guest avec le panier utilisateur
-  async mergeGuestCart(utilisateurId: number, guestItems: { id: string; name: string; price: number; quantity: number; image?: string }[]): Promise<void> {
+  async mergeGuestCart(utilisateurId: number, guestItems: { id: string; name: string; price: number; quantity: number; image?: string; customCreation?: { size: { id: number }; selectedFruits?: string[]; selectedSauces?: string[]; selectedCereales?: string[] } }[]): Promise<void> {
     try {
       await this.cartRepository.mergeGuestCart(utilisateurId, guestItems);
     } catch (error) {
@@ -306,9 +306,11 @@ class CartService {
       const fullOrder = await orderRepository.findById(commande.id);
 
       // Envoi asynchrone de la notification WhatsApp au vendeur
-      WhatsAppService.sendOrderNotification(fullOrder).catch((error: any) =>
-        console.error('Erreur WhatsApp ignorée :', error)
-      );
+      if (fullOrder) {
+        WhatsAppService.sendOrderNotification(fullOrder).catch((error: unknown) =>
+          console.error('Erreur WhatsApp ignorée :', error)
+        );
+      }
 
       // Vider le panier
       await this.cartRepository.clearCart(cart.id);

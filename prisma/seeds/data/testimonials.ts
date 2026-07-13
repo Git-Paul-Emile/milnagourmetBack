@@ -1,3 +1,7 @@
+import { cloudinaryUrl } from '../../../src/config/cloudinary.js';
+
+const DEFAULT_AVATAR = cloudinaryUrl('temoignages/milna-owner.jpg');
+
 export const testimonialsData = [
   {
     "id": 1,
@@ -5,7 +9,7 @@ export const testimonialsData = [
     "location": "Libreville",
     "rating": 5,
     "comment": "Les meilleurs yaourts de Dakar ! La qualité est exceptionnelle et les saveurs sont uniques. Je recommande vivement Milna Gourmet.",
-    "avatar": "/uploads/temoignages/milna-owner.jpg",
+    "avatar": DEFAULT_AVATAR,
     "date": "2024-01-15"
   },
   {
@@ -14,7 +18,7 @@ export const testimonialsData = [
     "location": "Libreville",
     "rating": 5,
     "comment": "Service impeccable et produits d'une fraîcheur remarquable. Le yaourt au bissap est une merveille !",
-    "avatar": "/uploads/temoignages/milna-owner.jpg",
+    "avatar": DEFAULT_AVATAR,
     "date": "2024-01-20"
   },
   {
@@ -23,7 +27,7 @@ export const testimonialsData = [
     "location": "Libreville",
     "rating": 5,
     "comment": "Milna Gourmet a révolutionné ma façon de consommer les yaourts. Crémeux, savoureux et fait maison. Bravo !",
-    "avatar": "/uploads/temoignages/milna-owner.jpg",
+    "avatar": DEFAULT_AVATAR,
     "date": "2024-01-25"
   }
 ];

@@ -12,6 +12,13 @@ export const creationSizesData = [
     "fruits": 2,
     "sauces": 2,
     "cereales": true
+  },
+  {
+    "name": "Lot de 10 minis fruités",
+    "price": 6000,
+    "fruits": 2,
+    "sauces": 1,
+    "cereales": false
   }
 ];
 
@@ -21,6 +28,9 @@ export const creationOptionsData = {
     "Mangue",
     "Kiwi",
     "Raisin",
+    "Ananas",
+    "Pastèque",
+    "Fruits de la passion"
   ],
   "sauces": [
     "Abricot",

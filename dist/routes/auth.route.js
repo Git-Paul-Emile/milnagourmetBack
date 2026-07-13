@@ -3,13 +3,14 @@ import authController from '../controller/auth.controller.js';
 import { authenticateToken } from '../utils/auth.middleware.js';
 import validateResource from '../middleware/validateResource.js';
 import { registerSchema, loginSchema, updateProfileSchema } from '../validator/auth.schema.js';
+import { authLimiter, refreshLimiter } from '../middleware/rateLimiter.js';
 const router = Router();
 // Inscription d'un nouvel utilisateur
-router.post('/register', authController.register);
+router.post('/register', authLimiter, validateResource(registerSchema), authController.register);
 // Connexion d'un utilisateur
-router.post('/login', validateResource(loginSchema), authController.login);
+router.post('/login', authLimiter, validateResource(loginSchema), authController.login);
 // Rafraîchir le token d'accès
-router.post('/refresh', authController.refresh);
+router.post('/refresh', refreshLimiter, authController.refresh);
 // Déconnexion
 router.post('/logout', authController.logout);
 // Déconnexion de tous les appareils

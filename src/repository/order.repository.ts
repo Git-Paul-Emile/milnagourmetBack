@@ -1,11 +1,25 @@
 import { prisma } from "../config/database.js"
-import type { Commande, ElementCommande, CreationPersonnalisee, Utilisateur, Livreur, Produit } from "@prisma/client"
+import type { Commande, ElementCommande, CreationPersonnalisee, Utilisateur, Livreur, Produit, TailleCreation, StatutCommande, Prisma } from "@prisma/client"
+
+export interface OrderListOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: StatutCommande;
+  sortBy?: 'date' | 'total' | 'status';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginatedOrders {
+  items: CommandeWithRelations[];
+  total: number;
+}
 
 export type CommandeWithRelations = Commande & {
-  utilisateur: any;
+  utilisateur: Utilisateur | null;
   elements: (ElementCommande & { produit: Produit })[];
   creationsPersonnalisees: (CreationPersonnalisee & {
-    taille: any;
+    taille: TailleCreation;
     fruits: { fruit: { nom: string } }[];
     sauces: { sauce: { nom: string } }[];
     cereales: { cereale: { nom: string } }[];
@@ -14,6 +28,7 @@ export type CommandeWithRelations = Commande & {
 }
 
 interface CreateOrderData {
+  numeroCommande: string;
   utilisateurId?: number;
   nomClient: string;
   telephoneClient: string;
@@ -42,6 +57,7 @@ class OrderRepository {
       try {
         const order = await prisma.commande.create({
           data: {
+            numeroCommande: data.numeroCommande,
             utilisateurId: data.utilisateurId,
             nomClient: data.nomClient,
             telephoneClient: data.telephoneClient,
@@ -106,9 +122,35 @@ class OrderRepository {
       }
     }
 
-    async findAll(): Promise<CommandeWithRelations[]> {
+    async findAll(options: OrderListOptions = {}): Promise<PaginatedOrders> {
         try {
-            const orders = await prisma.commande.findMany({
+            const { page, limit, search, status, sortBy = 'date', sortOrder = 'desc' } = options;
+
+            const where: Prisma.CommandeWhereInput = {};
+            if (status) {
+              where.statut = status;
+            }
+            if (search) {
+              where.OR = [
+                { numeroCommande: { contains: search, mode: 'insensitive' } },
+                { nomClient: { contains: search, mode: 'insensitive' } },
+                { telephoneClient: { contains: search } },
+                { utilisateur: { nomComplet: { contains: search, mode: 'insensitive' } } },
+                { utilisateur: { telephone: { contains: search } } }
+              ];
+            }
+
+            const orderByMap: Record<'date' | 'total' | 'status', Prisma.CommandeOrderByWithRelationInput> = {
+              date: { creeLe: sortOrder },
+              total: { montantTotal: sortOrder },
+              status: { statut: sortOrder }
+            };
+
+            const isPaginated = page !== undefined && limit !== undefined;
+
+            const [orders, total] = await Promise.all([
+              prisma.commande.findMany({
+                where,
                 include: {
                   elements: {
                     include: {
@@ -138,11 +180,13 @@ class OrderRepository {
                   utilisateur: true,
                   livreur: true
                 },
-                orderBy: {
-                  creeLe: 'desc'
-                }
-            });
-            return orders;
+                orderBy: orderByMap[sortBy],
+                ...(isPaginated ? { skip: (page - 1) * limit, take: limit } : {})
+              }),
+              prisma.commande.count({ where })
+            ]);
+
+            return { items: orders, total };
         } catch (error) {
             console.error('Erreur lors de la récupération des commandes:', error);
             throw new Error('Impossible de récupérer les commandes');
@@ -234,11 +278,11 @@ class OrderRepository {
         }
     }
 
-    async updateStatus(id: number, statut: string): Promise<CommandeWithRelations> {
+    async updateStatus(id: number, statut: StatutCommande): Promise<CommandeWithRelations> {
         try {
             const order = await prisma.commande.update({
                 where: { id },
-                data: { statut: statut as any },
+                data: { statut },
                 include: {
                   elements: {
                     include: {
@@ -272,7 +316,49 @@ class OrderRepository {
             return order;
         } catch (error) {
             console.error('Erreur lors de la mise à jour du statut de la commande:', error);
-            throw new Error('Impossible de mettre à jour le statut de la commande');
+            throw error;
+        }
+    }
+
+    async assignDeliveryPerson(id: number, livreurId: number | null): Promise<CommandeWithRelations> {
+        try {
+            const order = await prisma.commande.update({
+                where: { id },
+                data: { livreurId },
+                include: {
+                  elements: {
+                    include: {
+                      produit: true
+                    }
+                  },
+                  creationsPersonnalisees: {
+                    include: {
+                      taille: true,
+                      fruits: {
+                        include: {
+                          fruit: true
+                        }
+                      },
+                      sauces: {
+                        include: {
+                          sauce: true
+                        }
+                      },
+                      cereales: {
+                        include: {
+                          cereale: true
+                        }
+                      }
+                    }
+                  },
+                  utilisateur: true,
+                  livreur: true
+                }
+            });
+            return order;
+        } catch (error) {
+            console.error('Erreur lors de l\'assignation du livreur à la commande:', error);
+            throw error;
         }
     }
 

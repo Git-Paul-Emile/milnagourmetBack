@@ -1,10 +1,21 @@
 import temoinageRepository from '../repository/temoinage.repository.js';
 import type { Temoinage } from '@prisma/client';
 
+export interface TemoignageDTO {
+  id: number;
+  name: string;
+  location: string;
+  rating: number;
+  comment: string;
+  avatar: string | null;
+  date: string;
+  active?: boolean;
+}
+
 class TemoinageService {
   private temoinageRepository = temoinageRepository;
 
-  async getAllTestimonials(includeInactive: boolean = false): Promise<any[]> {
+  async getAllTestimonials(includeInactive: boolean = false): Promise<TemoignageDTO[]> {
     try {
       const testimonials = includeInactive
         ? await this.temoinageRepository.findAll()
@@ -18,7 +29,7 @@ class TemoinageService {
         rating: testimonial.note,
         comment: testimonial.commentaire,
         avatar: testimonial.avatar,
-        date: testimonial.date.toISOString().split('T')[0], // Format YYYY-MM-DD
+        date: testimonial.date.toISOString().slice(0, 10), // Format YYYY-MM-DD
         active: includeInactive ? testimonial.active : undefined
       }));
     } catch (error) {

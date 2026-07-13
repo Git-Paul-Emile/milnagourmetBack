@@ -1,5 +1,8 @@
 import productRepository from '../repository/product.repository.js';
 import { ProductCreateSchema, ProductUpdateSchema } from '../validator/product.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 class ProductService {
     productRepository = productRepository;
     async create(data) {
@@ -13,16 +16,18 @@ class ProductService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la création du produit:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
-    async findAll() {
+    async findAll(options = {}) {
         try {
-            const products = await productRepository.findAll();
-            console.log(`${products.length} produits récupérés`);
+            const { items: products, total } = await productRepository.findAll(options);
             // Transformer les données pour correspondre à l'interface front-end
-            const transformedProducts = products.map(product => this.transformProduct(product));
-            return transformedProducts;
+            const items = products.map(product => this.transformProduct(product));
+            return { items, total };
         }
         catch (error) {
             console.error('Erreur dans le service lors de la récupération des produits:', error);
@@ -51,7 +56,7 @@ class ProductService {
             // Vérifier si le produit existe
             const existingProduct = await productRepository.findById(id);
             if (!existingProduct) {
-                throw new Error('Produit non trouvé');
+                throw new AppError('Produit non trouvé', StatusCodes.NOT_FOUND);
             }
             const product = await productRepository.update(id, validatedData);
             console.log(`Produit mis à jour avec succès: ${product.nom}`);
@@ -60,6 +65,9 @@ class ProductService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la mise à jour du produit:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -68,7 +76,7 @@ class ProductService {
             // Vérifier si le produit existe
             const existingProduct = await productRepository.findById(id);
             if (!existingProduct) {
-                throw new Error('Produit non trouvé');
+                throw new AppError('Produit non trouvé', StatusCodes.NOT_FOUND);
             }
             const product = await productRepository.delete(id);
             console.log(`Produit supprimé avec succès: ${product.nom}`);

@@ -1,5 +1,8 @@
 import sauceRepository from '../repository/sauce.repository.js';
 import { SauceCreateSchema, SauceUpdateSchema } from '../validator/creation.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 class SauceService {
     sauceRepository = sauceRepository;
     async create(data) {
@@ -10,7 +13,7 @@ class SauceService {
             const existingSauces = await sauceRepository.findAll();
             const duplicate = existingSauces.find(sauce => sauce.nom.toLowerCase() === validatedData.nom.toLowerCase());
             if (duplicate) {
-                throw new Error('Une sauce avec ce nom existe déjà');
+                throw new AppError('Une sauce avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
             }
             const sauce = await sauceRepository.create(validatedData);
             console.log(`Sauce créée avec succès: ${sauce.nom}`);
@@ -18,6 +21,9 @@ class SauceService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la création de la sauce:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -54,14 +60,14 @@ class SauceService {
             // Vérifier si la sauce existe
             const existingSauce = await sauceRepository.findById(id);
             if (!existingSauce) {
-                throw new Error('Sauce non trouvée');
+                throw new AppError('Sauce non trouvée', StatusCodes.NOT_FOUND);
             }
             // Vérifier si le nouveau nom n'est pas déjà utilisé par une autre sauce
             if (validatedData.nom) {
                 const allSauces = await sauceRepository.findAll();
                 const duplicate = allSauces.find(sauce => sauce.nom.toLowerCase() === validatedData.nom.toLowerCase() && sauce.id !== id);
                 if (duplicate) {
-                    throw new Error('Une sauce avec ce nom existe déjà');
+                    throw new AppError('Une sauce avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
                 }
             }
             const sauce = await sauceRepository.update(id, validatedData);
@@ -70,6 +76,9 @@ class SauceService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la mise à jour de la sauce:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -78,7 +87,7 @@ class SauceService {
             // Vérifier si la sauce existe
             const existingSauce = await sauceRepository.findById(id);
             if (!existingSauce) {
-                throw new Error('Sauce non trouvée');
+                throw new AppError('Sauce non trouvée', StatusCodes.NOT_FOUND);
             }
             const sauce = await sauceRepository.delete(id);
             console.log(`Sauce supprimée avec succès: ${sauce.nom}`);

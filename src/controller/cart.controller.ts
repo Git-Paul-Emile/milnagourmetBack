@@ -2,8 +2,11 @@ import type { Request, Response, NextFunction } from 'express';
 import cartService from '../services/cart.service.js';
 import { jsonResponse, AppError } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
+import cloudinary from '../config/cloudinary.js';
 
-//TODO: refaire le service cartservice avec les bonnes pratiques 
+//TODO: refaire le service cartservice avec les bonnes pratiques
+
+const DEFAULT_CREATION_IMAGE = cloudinary.url('milnagourmet/creation/yogurt-creation.jpg', { secure: true });
 
 
 class CartController {
@@ -12,7 +15,7 @@ class CartController {
   // Récupérer le panier de l'utilisateur connecté
   async getCart(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -45,7 +48,7 @@ class CartController {
             ].filter(Boolean).join(' • ') || 'Création personnalisée',
             price: creation.prix,
             quantity: creation.quantite,
-            image: '/uploads/creation/yogurt-creation.jpg',
+            image: DEFAULT_CREATION_IMAGE,
             customCreation: {
               size: creation.taille,
               selectedFruits: creation.fruits ? JSON.parse(creation.fruits) : [],
@@ -74,7 +77,7 @@ class CartController {
   // Ajouter un produit au panier
   async addToCart(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -102,7 +105,7 @@ class CartController {
   // Mettre à jour la quantité d'un produit dans le panier
   async updateCartItem(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -130,7 +133,7 @@ class CartController {
   // Supprimer un produit du panier
   async removeFromCart(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -158,7 +161,7 @@ class CartController {
   // Vider le panier
   async clearCart(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -180,7 +183,7 @@ class CartController {
   // Ajouter une création personnalisée au panier
   async addCustomCreation(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -215,7 +218,7 @@ class CartController {
   // Mettre à jour une création personnalisée dans le panier
   async updateCustomCreation(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -249,7 +252,7 @@ class CartController {
   // Supprimer une création personnalisée du panier
   async removeCustomCreation(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -277,7 +280,7 @@ class CartController {
   // Procédure de checkout
   async checkout(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);

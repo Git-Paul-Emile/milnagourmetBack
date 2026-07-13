@@ -4,6 +4,7 @@ class OrderRepository {
         try {
             const order = await prisma.commande.create({
                 data: {
+                    numeroCommande: data.numeroCommande,
                     utilisateurId: data.utilisateurId,
                     nomClient: data.nomClient,
                     telephoneClient: data.telephoneClient,
@@ -68,43 +69,66 @@ class OrderRepository {
             throw new Error('Impossible de créer la commande');
         }
     }
-    async findAll() {
+    async findAll(options = {}) {
         try {
-            const orders = await prisma.commande.findMany({
-                include: {
-                    elements: {
-                        include: {
-                            produit: true
-                        }
-                    },
-                    creationsPersonnalisees: {
-                        include: {
-                            taille: true,
-                            fruits: {
-                                include: {
-                                    fruit: true
-                                }
-                            },
-                            sauces: {
-                                include: {
-                                    sauce: true
-                                }
-                            },
-                            cereales: {
-                                include: {
-                                    cereale: true
+            const { page, limit, search, status, sortBy = 'date', sortOrder = 'desc' } = options;
+            const where = {};
+            if (status) {
+                where.statut = status;
+            }
+            if (search) {
+                where.OR = [
+                    { numeroCommande: { contains: search, mode: 'insensitive' } },
+                    { nomClient: { contains: search, mode: 'insensitive' } },
+                    { telephoneClient: { contains: search } },
+                    { utilisateur: { nomComplet: { contains: search, mode: 'insensitive' } } },
+                    { utilisateur: { telephone: { contains: search } } }
+                ];
+            }
+            const orderByMap = {
+                date: { creeLe: sortOrder },
+                total: { montantTotal: sortOrder },
+                status: { statut: sortOrder }
+            };
+            const isPaginated = page !== undefined && limit !== undefined;
+            const [orders, total] = await Promise.all([
+                prisma.commande.findMany({
+                    where,
+                    include: {
+                        elements: {
+                            include: {
+                                produit: true
+                            }
+                        },
+                        creationsPersonnalisees: {
+                            include: {
+                                taille: true,
+                                fruits: {
+                                    include: {
+                                        fruit: true
+                                    }
+                                },
+                                sauces: {
+                                    include: {
+                                        sauce: true
+                                    }
+                                },
+                                cereales: {
+                                    include: {
+                                        cereale: true
+                                    }
                                 }
                             }
-                        }
+                        },
+                        utilisateur: true,
+                        livreur: true
                     },
-                    utilisateur: true,
-                    livreur: true
-                },
-                orderBy: {
-                    creeLe: 'desc'
-                }
-            });
-            return orders;
+                    orderBy: orderByMap[sortBy],
+                    ...(isPaginated ? { skip: (page - 1) * limit, take: limit } : {})
+                }),
+                prisma.commande.count({ where })
+            ]);
+            return { items: orders, total };
         }
         catch (error) {
             console.error('Erreur lors de la récupération des commandes:', error);
@@ -200,7 +224,7 @@ class OrderRepository {
         try {
             const order = await prisma.commande.update({
                 where: { id },
-                data: { statut: statut },
+                data: { statut },
                 include: {
                     elements: {
                         include: {
@@ -235,7 +259,49 @@ class OrderRepository {
         }
         catch (error) {
             console.error('Erreur lors de la mise à jour du statut de la commande:', error);
-            throw new Error('Impossible de mettre à jour le statut de la commande');
+            throw error;
+        }
+    }
+    async assignDeliveryPerson(id, livreurId) {
+        try {
+            const order = await prisma.commande.update({
+                where: { id },
+                data: { livreurId },
+                include: {
+                    elements: {
+                        include: {
+                            produit: true
+                        }
+                    },
+                    creationsPersonnalisees: {
+                        include: {
+                            taille: true,
+                            fruits: {
+                                include: {
+                                    fruit: true
+                                }
+                            },
+                            sauces: {
+                                include: {
+                                    sauce: true
+                                }
+                            },
+                            cereales: {
+                                include: {
+                                    cereale: true
+                                }
+                            }
+                        }
+                    },
+                    utilisateur: true,
+                    livreur: true
+                }
+            });
+            return order;
+        }
+        catch (error) {
+            console.error('Erreur lors de l\'assignation du livreur à la commande:', error);
+            throw error;
         }
     }
 }

@@ -1,15 +1,16 @@
 import type { Request, Response, NextFunction } from 'express';
 declare class UploadController {
     getUsedImagesList(): Promise<string[]>;
-    uploadProductImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadLogoImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadBannerImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadTestimonialImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadCategoryImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadFruitImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadSauceImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadCerealeImage(req: Request, res: Response, next: NextFunction): Promise<void>;
-    uploadAvatarToastImage(req: Request, res: Response, next: NextFunction): Promise<void>;
+    private handleUpload;
+    uploadProductImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadLogoImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadBannerImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadTestimonialImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadCategoryImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadFruitImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadSauceImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadCerealeImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadAvatarToastImage: (req: Request, res: Response, next: NextFunction) => void;
     getUsedImages: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     deleteImage: (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
     listImages: (req: Request, res: Response, next: NextFunction) => Promise<void>;

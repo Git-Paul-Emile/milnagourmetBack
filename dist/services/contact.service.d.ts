@@ -1,4 +1,11 @@
 import type { HoraireOuverture } from '@prisma/client';
+export interface StoreHoursDTO {
+    [day: string]: {
+        open: string;
+        close: string;
+        closed: boolean;
+    };
+}
 declare class ContactService {
     private contactRepository;
     getContactInfo(): Promise<{
@@ -7,9 +14,11 @@ declare class ContactService {
         phone: string;
         email: string;
         whatsapp: string;
-        hours: any;
+        hours: StoreHoursDTO;
     }>;
-    getSocialMedia(): Promise<any>;
+    getSocialMedia(): Promise<{
+        [platform: string]: string;
+    }>;
     getContactSectionData(): Promise<{
         socialLinks: {
             name: string;
@@ -42,7 +51,7 @@ declare class ContactService {
         phone?: string;
         email?: string;
         whatsapp?: string;
-        hours?: any;
+        hours?: StoreHoursDTO;
     }): Promise<{
         id: number;
         modifieLe: Date;

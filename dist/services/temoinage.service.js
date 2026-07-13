@@ -14,7 +14,7 @@ class TemoinageService {
                 rating: testimonial.note,
                 comment: testimonial.commentaire,
                 avatar: testimonial.avatar,
-                date: testimonial.date.toISOString().split('T')[0], // Format YYYY-MM-DD
+                date: testimonial.date.toISOString().slice(0, 10), // Format YYYY-MM-DD
                 active: includeInactive ? testimonial.active : undefined
             }));
         }

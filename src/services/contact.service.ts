@@ -1,6 +1,11 @@
 import contactRepository from '../repository/contact.repository.js';
 import type { Contact, HoraireOuverture, ReseauSocial } from '@prisma/client';
 
+// Format des horaires d'ouverture tel qu'échangé avec le frontend (clé = jour en anglais)
+export interface StoreHoursDTO {
+  [day: string]: { open: string; close: string; closed: boolean };
+}
+
 class ContactService {
   private contactRepository = contactRepository;
 
@@ -21,7 +26,7 @@ class ContactService {
       }
 
       // Convertir les horaires du format DB vers le format API
-      const hours: any = {};
+      const hours: StoreHoursDTO = {};
       const dayMap: { [key: string]: string } = {
         'Lundi': 'monday',
         'Mardi': 'tuesday',
@@ -32,7 +37,7 @@ class ContactService {
         'Dimanche': 'sunday'
       };
 
-      contact.horaires.forEach((horaire: any) => {
+      contact.horaires.forEach((horaire: HoraireOuverture) => {
         const dayKey = dayMap[horaire.jour] || horaire.jour.toLowerCase();
         hours[dayKey] = {
           open: horaire.ouverture || '',
@@ -60,7 +65,7 @@ class ContactService {
       const socialMedia = await this.contactRepository.findAllSocialMedia();
 
       // Convertir vers le format attendu par l'API
-      const result: any = {};
+      const result: { [platform: string]: string } = {};
       socialMedia.forEach(social => {
         const platform = social.plateforme.toLowerCase();
         result[platform] = social.url;
@@ -116,8 +121,8 @@ class ContactService {
         // Convertir les horaires pour l'affichage
         const rawStoreHours: Array<{ day: string; hours: string }> = [];
         contact.horaires
-          .filter((h: any) => !h.ferme && h.jour)
-          .forEach((h: any) => {
+          .filter((h: HoraireOuverture) => !h.ferme && h.jour)
+          .forEach((h: HoraireOuverture) => {
             rawStoreHours.push({
               day: h.jour!,
               hours: h.ouverture && h.fermeture ? `${h.ouverture} - ${h.fermeture}` : 'Fermé'
@@ -178,7 +183,7 @@ class ContactService {
     phone?: string;
     email?: string;
     whatsapp?: string;
-    hours?: any;
+    hours?: StoreHoursDTO;
   }) {
     try {
       // Convertir les horaires du format API vers le format DB
@@ -215,7 +220,7 @@ class ContactService {
     }
   }
 
-  private convertHoursToDB(hours: any): Array<{ jour: string; ouverture?: string; fermeture?: string; ferme: boolean; ordre: number }> {
+  private convertHoursToDB(hours: StoreHoursDTO): Array<{ jour: string; ouverture?: string; fermeture?: string; ferme: boolean; ordre: number }> {
     const dayMap: { [key: string]: string } = {
       'monday': 'Lundi',
       'tuesday': 'Mardi',

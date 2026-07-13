@@ -1,12 +1,17 @@
 declare class DeliveryPersonService {
     getAllDeliveryPersons(): Promise<{
-        id: any;
-        nomComplet: any;
-        phone: any;
-        vehicle: any;
-        active: any;
-        createdAt: any;
-        commandes: any;
+        id: string;
+        nomComplet: string;
+        phone: string;
+        vehicle: string;
+        active: boolean;
+        createdAt: Date;
+        commandes: {
+            id: string;
+            statut: string;
+            montantTotal: number;
+            creeLe: Date;
+        }[];
     }[]>;
     getDeliveryPersonById(id: string): Promise<{
         id: string;

@@ -1,5 +1,12 @@
+import { cloudinaryUrl } from '../../../src/config/cloudinary.js';
+
+const DEFAULT_BANNER = cloudinaryUrl('banners/hero-banner.jpg');
+const DEFAULT_CREATION_IMAGE = cloudinaryUrl('creation/yogurt-creation.jpg');
+const DEFAULT_LOGO = cloudinaryUrl('logos/milna-logo.png');
+const DEFAULT_AVATAR_TOAST = cloudinaryUrl('avatarToast/milna-owner.jpg');
+
 export const heroData = {
-  "banner": "/uploads/banners/hero-banner.jpg",
+  "banner": DEFAULT_BANNER,
   "features": [
     {
       "title": "100% Naturel",
@@ -22,7 +29,7 @@ export const catalogData = {
   "creationTitle": "Création Personnalisée",
   "creationDescription": "Composez votre yaourt gourmet selon vos envies ! Choisissez votre taille, vos fruits, vos sauces et vos céréales.",
   "creationButtonText": "Créer mon Gourmet",
-  "creationImage": "/uploads/creation/yogurt-creation.jpg",
+  "creationImage": DEFAULT_CREATION_IMAGE,
   "emptyMessage": "Aucun produit trouvé",
   "emptySubMessage": "Essayez une autre catégorie ou revenez plus tard"
 };
@@ -35,11 +42,11 @@ export const navigationData = [
 ];
 
 export const brandingData = {
-  "logo": "/uploads/logos/milna-logo.png"
+  "logo": DEFAULT_LOGO
 };
 
 export const avatarToastData = {
-  "image": "/uploads/avatarToast/milna-owner.jpg"
+  "image": DEFAULT_AVATAR_TOAST
 };
 
-export const bannerData = "/uploads/banners/hero-banner.jpg";
+export const bannerData = DEFAULT_BANNER;

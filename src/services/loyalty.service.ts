@@ -1,5 +1,15 @@
 import { prisma } from '../config/database.js';
 
+export interface LoyaltyHistoryEntryDTO {
+  id: number;
+  type: string;
+  points: number;
+  amount: number;
+  description: string;
+  orderNumber?: string;
+  date: Date;
+}
+
 export class LoyaltyService {
   private static readonly CFA_PER_POINT = 15; // 1 point = 15 F de remise
   private static readonly POINTS_PER_CFA = 1 / this.CFA_PER_POINT; // Environ 0.0667 points par F
@@ -128,7 +138,7 @@ export class LoyaltyService {
   /**
    * Récupère l'historique des points d'un utilisateur
    */
-  static async getUserPointsHistory(userId: number): Promise<any[]> {
+  static async getUserPointsHistory(userId: number): Promise<LoyaltyHistoryEntryDTO[]> {
     const history = await prisma.historiquePoints.findMany({
       where: { utilisateurId: userId },
       include: {

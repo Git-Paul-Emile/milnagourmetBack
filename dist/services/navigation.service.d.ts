@@ -1,7 +1,7 @@
 declare class NavigationService {
     getNavigation(): Promise<{
-        name: any;
-        href: any;
+        name: string;
+        href: string;
     }[]>;
 }
 declare const _default: NavigationService;

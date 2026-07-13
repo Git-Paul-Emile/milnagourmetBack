@@ -215,8 +215,11 @@ class CartService {
             // Appliquer la remise fidélité si demandée
             let discountAmount = 0;
             if (pointsToUse > 0) {
-                discountAmount = await LoyaltyService.usePoints(utilisateurId, pointsToUse);
-                totalAmount -= discountAmount;
+                // Limiter les points utilisés à ce qui est nécessaire pour couvrir le panier
+                const maxPointsNeeded = Math.ceil(LoyaltyService.cfaToPoints(totalAmount));
+                const effectivePointsToUse = Math.min(pointsToUse, maxPointsNeeded);
+                discountAmount = await LoyaltyService.usePoints(utilisateurId, effectivePointsToUse);
+                totalAmount = Math.max(0, totalAmount - discountAmount);
             }
             // Créer la commande
             const commande = await prisma.commande.create({
@@ -263,7 +266,9 @@ class CartService {
             // Récupérer la commande complète avec relations pour la notification WhatsApp
             const fullOrder = await orderRepository.findById(commande.id);
             // Envoi asynchrone de la notification WhatsApp au vendeur
-            WhatsAppService.sendOrderNotification(fullOrder).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
+            if (fullOrder) {
+                WhatsAppService.sendOrderNotification(fullOrder).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
+            }
             // Vider le panier
             await this.cartRepository.clearCart(cart.id);
             return {

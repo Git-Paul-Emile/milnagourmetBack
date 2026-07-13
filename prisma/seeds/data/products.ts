@@ -1,3 +1,8 @@
+import { cloudinaryUrl } from '../../../src/config/cloudinary.js';
+
+const YOGURT_NATURE_IMAGE = cloudinaryUrl('produits/yogurt-nature.jpg');
+const YOGURT_LIQUID_IMAGE = cloudinaryUrl('produits/yogurt-liquid.jpg');
+
 export const productsData = [
   {
     "id": "cremeux-nature",
@@ -5,7 +10,7 @@ export const productsData = [
     "category": "cremeux",
     "price": 450,
     "description": "Yaourt crémeux nature, préparé avec des ingrédients frais et naturels. Parfait pour un petit-déjeuner sain ou une collation légère.",
-    "image": "/uploads/produits/yogurt-nature.jpg",
+    "image": YOGURT_NATURE_IMAGE,
     "available": true,
     "archived": false
   },
@@ -15,7 +20,7 @@ export const productsData = [
     "category": "cremeux",
     "price": 600,
     "description": "Yaourt crémeux avec une pointe de douceur, idéal pour accompagner vos moments gourmands.",
-    "image": "/uploads/produits/yogurt-nature.jpg",
+    "image": YOGURT_NATURE_IMAGE,
     "available": true,
     "archived": false
   },
@@ -25,7 +30,7 @@ export const productsData = [
     "category": "cremeux",
     "price": 1000,
     "description": "Yaourt crémeux agrémenté de délicieuses céréales croquantes pour plus de texture et de saveur.",
-    "image": "/uploads/produits/yogurt-nature.jpg",
+    "image": YOGURT_NATURE_IMAGE,
     "available": true
   },
   {
@@ -34,7 +39,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2000,
     "description": "Yaourt liquide onctueux parfumé à la vanille naturelle. Une explosion de saveurs douces et crémeuses.",
-    "image": "/uploads/produits/yogurt-liquid.jpg",
+    "image": YOGURT_LIQUID_IMAGE,
     "available": true
   },
   {
@@ -43,7 +48,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2500,
     "description": "Yaourt liquide au bissap (hibiscus), une fusion unique entre tradition sénégalaise et gourmandise moderne.",
-    "image": "/uploads/produits/yogurt-liquid.jpg",
+    "image": YOGURT_LIQUID_IMAGE,
     "available": true,
     "archived": false
   },
@@ -53,7 +58,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2500,
     "description": "Yaourt liquide inspiré des saveurs traditionnelles du couscous, pour une expérience gustative authentique.",
-    "image": "/uploads/produits/yogurt-liquid.jpg",
+    "image": YOGURT_LIQUID_IMAGE,
     "available": true
   },
   {
@@ -62,8 +67,25 @@ export const productsData = [
     "category": "liquide",
     "price": 2500,
     "description": "Yaourt liquide à la noix de coco fraîche, transportez-vous sous les tropiques à chaque gorgée.",
-    "image": "/uploads/produits/yogurt-liquid.jpg",
+    "image": YOGURT_LIQUID_IMAGE,
     "available": true
   },
- 
+  {
+    "id": "cremeux-lot10-simple",
+    "name": "Lot de 10 miniscrémeux simple",
+    "category": "cremeux",
+    "price": 3000,
+    "description": "10 miniscrémeux nature de 100g, parfaits pour partager ou pour vos collations.",
+    "image": YOGURT_NATURE_IMAGE,
+    "available": true
+  },
+  {
+    "id": "cremeux-lot10-mixe",
+    "name": "Lot de 10 miniscrémeux mixe",
+    "category": "cremeux",
+    "price": 4500,
+    "description": "10 miniscrémeux de 100g aux saveurs variées, à assortir selon vos envies.",
+    "image": YOGURT_NATURE_IMAGE,
+    "available": true
+  }
 ];

@@ -1,4 +1,6 @@
 import deliveryPersonRepository from '../repository/deliveryPerson.repository.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
 class DeliveryPersonService {
     async getAllDeliveryPersons() {
         try {
@@ -28,7 +30,7 @@ class DeliveryPersonService {
         try {
             const person = await deliveryPersonRepository.findById(id);
             if (!person) {
-                throw new Error('Livreur non trouvé');
+                throw new AppError('Livreur non trouvé', StatusCodes.NOT_FOUND);
             }
             return {
                 id: person.id.toString(),

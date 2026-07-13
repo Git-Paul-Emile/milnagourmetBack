@@ -12,7 +12,10 @@ const envSchema = z.object({
   
   // Database
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  
+
+  // Cloudinary (stockage des médias)
+  CLOUDINARY_URL: z.string().min(1, "CLOUDINARY_URL is required"),
+
   // Security
   ACCESS_TOKEN_SECRET: z.string().min(1, "ACCESS_TOKEN_SECRET is required"),
   REFRESH_TOKEN_SECRET: z.string().min(1, "REFRESH_TOKEN_SECRET is required"),
@@ -26,10 +29,11 @@ const envSchema = z.object({
   FRONT_URL: z.string().url().default('http://localhost:5173'),
   CORS_ORIGINS: z.string().optional().default(''),
   
-  // Twilio / WhatsApp
-  TWILIO_ACCOUNT_SID: z.string().optional(),
-  TWILIO_AUTH_TOKEN: z.string().optional(),
-  TWILIO_WHATSAPP_NUMBER: z.string().optional(),
+  // 360dialog / WhatsApp
+  D360_API_KEY: z.string().optional(),
+  D360_BASE_URL: z.string().default('https://waba-v2.360dialog.io'),
+  D360_TEMPLATE_NAME: z.string().optional(),
+  D360_TEMPLATE_LANG: z.string().default('fr'),
   VENDOR_WHATSAPP_NUMBER: z.string().optional(),
 });
 

@@ -18,77 +18,77 @@ declare class ThemeService {
         description: string | null;
         name: string;
         id: number;
+        createdAt: Date;
         lightColors: import("@prisma/client/runtime/library").JsonValue;
         darkColors: import("@prisma/client/runtime/library").JsonValue | null;
         isDefault: boolean;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
     }[]>;
     getActiveTheme(): Promise<{
         description: string | null;
         name: string;
         id: number;
+        createdAt: Date;
         lightColors: import("@prisma/client/runtime/library").JsonValue;
         darkColors: import("@prisma/client/runtime/library").JsonValue | null;
         isDefault: boolean;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
     } | null>;
     getThemeById(id: number): Promise<{
         description: string | null;
         name: string;
         id: number;
+        createdAt: Date;
         lightColors: import("@prisma/client/runtime/library").JsonValue;
         darkColors: import("@prisma/client/runtime/library").JsonValue | null;
         isDefault: boolean;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
     }>;
     createTheme(data: CreateThemeData): Promise<{
         description: string | null;
         name: string;
         id: number;
+        createdAt: Date;
         lightColors: import("@prisma/client/runtime/library").JsonValue;
         darkColors: import("@prisma/client/runtime/library").JsonValue | null;
         isDefault: boolean;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
     }>;
     updateTheme(id: number, data: UpdateThemeData): Promise<{
         description: string | null;
         name: string;
         id: number;
+        createdAt: Date;
         lightColors: import("@prisma/client/runtime/library").JsonValue;
         darkColors: import("@prisma/client/runtime/library").JsonValue | null;
         isDefault: boolean;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
     }>;
     setActiveTheme(id: number): Promise<{
         description: string | null;
         name: string;
         id: number;
+        createdAt: Date;
         lightColors: import("@prisma/client/runtime/library").JsonValue;
         darkColors: import("@prisma/client/runtime/library").JsonValue | null;
         isDefault: boolean;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
     }>;
     setDefaultTheme(id: number): Promise<{
         description: string | null;
         name: string;
         id: number;
+        createdAt: Date;
         lightColors: import("@prisma/client/runtime/library").JsonValue;
         darkColors: import("@prisma/client/runtime/library").JsonValue | null;
         isDefault: boolean;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
     }>;
     deleteTheme(id: number): Promise<{

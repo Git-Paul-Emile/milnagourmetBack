@@ -1,24 +1,44 @@
 import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { jsonResponse } from '../utils/index.js';
+import { ZodError } from 'zod';
+import { jsonResponse, buildPaginationMeta } from '../utils/index.js';
 import { AppError } from '../utils/AppError.js';
 import userService from '../services/user.service.js';
+import { userQuerySchema } from '../validator/query.schema.js';
 
 class UserController {
-  // Récupérer tous les utilisateurs
+  // Récupérer tous les utilisateurs (pagination/recherche/filtre/tri optionnels via query params)
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const users = await userService.getAllUsers();
+      const query = userQuerySchema.parse(req.query);
+      const { page, limit, search, sortBy, sortOrder } = query;
+      const blocked = query.blocked !== undefined ? query.blocked === 'true' : undefined;
+
+      const { items: users, total } = await userService.getAllUsers({
+        page,
+        limit,
+        search,
+        blocked,
+        sortBy,
+        sortOrder
+      });
+
+      const isPaginated = page !== undefined && limit !== undefined;
 
       res.status(StatusCodes.OK).json(
         jsonResponse({
           status: 'success',
           message: 'Utilisateurs récupérés avec succès',
-          data: users
+          data: users,
+          meta: isPaginated ? buildPaginationMeta(page, limit, total) : undefined
         })
       );
     } catch (error) {
-      next(error);
+      if (error instanceof ZodError) {
+        next(new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST));
+      } else {
+        next(error);
+      }
     }
   }
 

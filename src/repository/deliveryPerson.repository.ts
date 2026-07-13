@@ -1,5 +1,5 @@
 import { prisma } from "../config/database.js"
-import type { Livreur } from "@prisma/client"
+import type { Livreur, Commande } from "@prisma/client"
 
 class DeliveryPersonRepository {
 
@@ -27,7 +27,7 @@ class DeliveryPersonRepository {
         }
     }
 
-    async findById(id: string): Promise<(Livreur & { commandes: any[] }) | null> {
+    async findById(id: string): Promise<(Livreur & { commandes: Commande[] }) | null> {
         try {
             const deliveryPerson = await prisma.livreur.findUnique({
                 where: { id: parseInt(id) },
@@ -35,7 +35,7 @@ class DeliveryPersonRepository {
                     commandes: true
                 }
             });
-            return deliveryPerson as (Livreur & { commandes: any[] }) | null;
+            return deliveryPerson;
         } catch (error) {
             console.error('Erreur lors de la récupération du livreur:', error);
             throw new Error('Impossible de récupérer le livreur');

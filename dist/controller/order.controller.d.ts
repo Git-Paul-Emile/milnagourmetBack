@@ -5,6 +5,8 @@ declare class OrderController {
     getById(req: Request, res: Response, next: NextFunction): Promise<void>;
     getByUser(req: Request, res: Response, next: NextFunction): Promise<void>;
     updateStatus(req: Request, res: Response, next: NextFunction): Promise<void>;
+    assignDeliveryPerson(req: Request, res: Response, next: NextFunction): Promise<void>;
+    getRevenue(req: Request, res: Response, next: NextFunction): Promise<void>;
 }
 declare const _default: OrderController;
 export default _default;

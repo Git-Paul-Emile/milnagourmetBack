@@ -4,6 +4,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import bcrypt from 'bcrypt';
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 class AuthService {
     userRepository = userRepository;
     async register(data) {
@@ -21,6 +22,17 @@ class AuthService {
                 ...validatedData,
                 password: hashedPassword
             });
+            // Fusionner le panier guest si fourni (ne doit jamais faire échouer l'inscription elle-même)
+            if (validatedData.guestCart && validatedData.guestCart.length > 0) {
+                try {
+                    const cartService = (await import('./cart.service.js')).default;
+                    await cartService.mergeGuestCart(user.id, validatedData.guestCart);
+                    console.log(`Panier guest fusionné pour le nouvel utilisateur: ${user.nomComplet}`);
+                }
+                catch (mergeError) {
+                    console.error('Erreur lors de la fusion du panier guest à l\'inscription (ignorée) :', mergeError);
+                }
+            }
             // Générer les tokens après création de l'utilisateur
             const accessToken = generateAccessToken({
                 userId: user.id.toString(),
@@ -38,6 +50,9 @@ class AuthService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de l\'inscription:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -48,18 +63,26 @@ class AuthService {
             // Trouver l'utilisateur par téléphone
             const user = await userRepository.findByPhone(validatedData.telephone);
             if (!user) {
-                throw new Error('Aucun compte trouvé avec ce numéro de téléphone');
+                throw new AppError('Aucun compte trouvé avec ce numéro de téléphone', StatusCodes.UNAUTHORIZED);
+            }
+            if (user.blocked) {
+                throw new AppError('Ce compte a été bloqué', StatusCodes.FORBIDDEN);
             }
             // Vérifier le mot de passe hashé
             const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
             if (!isPasswordValid) {
-                throw new Error('Mot de passe incorrect');
+                throw new AppError('Mot de passe incorrect', StatusCodes.UNAUTHORIZED);
             }
-            // Fusionner le panier guest si fourni
+            // Fusionner le panier guest si fourni (ne doit jamais faire échouer la connexion elle-même)
             if (validatedData.guestCart && validatedData.guestCart.length > 0) {
-                const cartService = (await import('./cart.service.js')).default;
-                await cartService.mergeGuestCart(user.id, validatedData.guestCart);
-                console.log(`Panier guest fusionné pour l'utilisateur: ${user.nomComplet}`);
+                try {
+                    const cartService = (await import('./cart.service.js')).default;
+                    await cartService.mergeGuestCart(user.id, validatedData.guestCart);
+                    console.log(`Panier guest fusionné pour l'utilisateur: ${user.nomComplet}`);
+                }
+                catch (mergeError) {
+                    console.error('Erreur lors de la fusion du panier guest à la connexion (ignorée) :', mergeError);
+                }
             }
             // Générer les tokens
             const accessToken = generateAccessToken({
@@ -88,11 +111,11 @@ class AuthService {
             // Récupérer l'utilisateur
             const user = await userRepository.findById(decoded.userId);
             if (!user) {
-                throw new Error('Utilisateur non trouvé');
+                throw new AppError('Utilisateur non trouvé', StatusCodes.UNAUTHORIZED);
             }
             // Vérifier la version du token
             if (user.tokenVersion !== decoded.tokenVersion) {
-                throw new Error('Token de rafraîchissement invalide');
+                throw new AppError('Token de rafraîchissement invalide', StatusCodes.UNAUTHORIZED);
             }
             // Incrémenter la version du token pour rotation et récupérer la nouvelle valeur
             const updatedUser = await userRepository.incrementTokenVersion(user.id.toString());
@@ -112,7 +135,11 @@ class AuthService {
         }
         catch (error) {
             console.error('Erreur lors du rafraîchissement du token:', error);
-            throw error;
+            // Un refresh token expiré/invalide (erreur jwt brute) doit se traduire par 401, pas 500
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Session expirée, veuillez vous reconnecter', StatusCodes.UNAUTHORIZED);
         }
     }
     async logoutAll(userId) {
@@ -156,12 +183,12 @@ class AuthService {
             if (updateData.motDePasse && updateData.ancienMotDePasse) {
                 const user = await userRepository.findById(id);
                 if (!user) {
-                    throw new Error('Utilisateur non trouvé');
+                    throw new AppError('Utilisateur non trouvé', StatusCodes.NOT_FOUND);
                 }
                 // Utiliser le champ password du modèle Prisma
                 const isOldPasswordValid = await bcrypt.compare(updateData.ancienMotDePasse, user.password);
                 if (!isOldPasswordValid) {
-                    throw new Error('L\'ancien mot de passe est incorrect');
+                    throw new AppError('L\'ancien mot de passe est incorrect', StatusCodes.UNAUTHORIZED);
                 }
             }
             const updatedUser = await userRepository.update(id, updatePayload);

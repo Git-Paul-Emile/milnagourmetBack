@@ -1,4 +1,17 @@
 import { z } from 'zod';
+const guestCartSchema = z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number(),
+    quantity: z.number(),
+    image: z.string().optional(),
+    customCreation: z.object({
+        size: z.object({ id: z.number() }).passthrough(),
+        selectedFruits: z.array(z.string()).optional(),
+        selectedSauces: z.array(z.string()).optional(),
+        selectedCereales: z.array(z.string()).optional()
+    }).passthrough().optional()
+})).optional();
 export const registerSchema = z.object({
     telephone: z.string()
         .min(1, 'Le téléphone est requis')
@@ -13,7 +26,8 @@ export const registerSchema = z.object({
     password: z.string()
         .min(4, 'Le mot de passe doit contenir au minimum 4 caractères'),
     confirmPassword: z.string()
-        .min(1, 'La confirmation du mot de passe est requise')
+        .min(1, 'La confirmation du mot de passe est requise'),
+    guestCart: guestCartSchema
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Les mots de passe ne correspondent pas',
     path: ['confirmPassword']
@@ -24,13 +38,7 @@ export const loginSchema = z.object({
         .regex(/^[+]?[\d\s-()]+$/, 'Format de téléphone invalide'),
     password: z.string()
         .min(1, 'Le mot de passe est requis'),
-    guestCart: z.array(z.object({
-        id: z.string(),
-        name: z.string(),
-        price: z.number(),
-        quantity: z.number(),
-        image: z.string().optional()
-    })).optional()
+    guestCart: guestCartSchema
 });
 export const updateProfileSchema = z.object({
     nom: z.string()

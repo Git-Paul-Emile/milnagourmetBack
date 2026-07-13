@@ -2,8 +2,6 @@ import { env } from "./env.js";
 import express, {} from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
 import categorieRoute from "../routes/categorie.route.js";
 import creationRoute from "../routes/creation.route.js";
 import siteRoute from "../routes/site.route.js";
@@ -48,10 +46,6 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-// Servir les fichiers statiques du dossier uploads
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 // Routes
 app.use('/api/auth', authRoute);
 app.use('/api/categories', categorieRoute);
@@ -73,31 +67,33 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use((req, res) => {
     res.status(StatusCodes.NOT_FOUND).json({ message: "Route non trouvée" });
 });
-// Middleware de gestion des erreurs
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err, req, res, next) => {
-    let error = { ...err };
-    error.message = err.message;
+    let error;
     // Log error
     console.error(err);
     // Prisma errors
-    if (err.code) {
+    if ('code' in err && err.code) {
         // Handle specific Prisma error codes
         if (err.code === 'P2002') {
-            const message = 'Valeur dupliquée';
-            error = new AppError(message, 400);
+            error = new AppError('Valeur dupliquée', StatusCodes.BAD_REQUEST);
         }
         else if (err.code === 'P2025') {
-            const message = 'Ressource non trouvée';
-            error = new AppError(message, 404);
+            error = new AppError('Ressource non trouvée', StatusCodes.NOT_FOUND);
         }
         else {
-            const message = 'Erreur de base de données';
-            error = new AppError(message, 500);
+            error = new AppError('Erreur de base de données', StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
-    res.status(error.statusCode || 500).json({
+    else if (err instanceof AppError) {
+        error = err;
+    }
+    else {
+        error = new AppError(err.message || 'Erreur interne du serveur', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    res.status(error.statusCode).json({
         status: 'error',
-        message: error.message || 'Erreur interne du serveur',
+        message: error.message,
     });
 });
 export default app;

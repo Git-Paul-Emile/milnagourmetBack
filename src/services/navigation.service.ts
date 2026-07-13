@@ -11,7 +11,7 @@ class NavigationService {
         orderBy: { ordre: 'asc' }
       });
 
-      return navigationItems.map((item: any) => ({
+      return navigationItems.map((item) => ({
         name: item.nom,
         href: item.href
       }));

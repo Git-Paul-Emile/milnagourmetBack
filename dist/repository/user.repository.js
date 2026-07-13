@@ -18,24 +18,47 @@ class UserRepository {
             throw new Error(`Impossible de créer l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         }
     }
-    async findAll() {
+    async findAll(options = {}) {
         try {
-            const users = await prisma.utilisateur.findMany({
-                include: {
-                    commandes: {
-                        select: {
-                            id: true,
-                            statut: true,
-                            montantTotal: true,
-                            creeLe: true
+            const { page, limit, search, blocked, sortBy = 'date', sortOrder = 'desc' } = options;
+            const where = {
+                // On exclut toujours les administrateurs de la liste des clients
+                role: { not: 'ADMIN' }
+            };
+            if (blocked !== undefined) {
+                where.blocked = blocked;
+            }
+            if (search) {
+                where.OR = [
+                    { nomComplet: { contains: search, mode: 'insensitive' } },
+                    { telephone: { contains: search } }
+                ];
+            }
+            const orderByMap = {
+                name: { nomComplet: sortOrder },
+                orders: { commandes: { _count: sortOrder } },
+                date: { createdAt: sortOrder }
+            };
+            const isPaginated = page !== undefined && limit !== undefined;
+            const [users, total] = await Promise.all([
+                prisma.utilisateur.findMany({
+                    where,
+                    include: {
+                        commandes: {
+                            select: {
+                                id: true,
+                                statut: true,
+                                montantTotal: true,
+                                creeLe: true
+                            }
                         }
-                    }
-                },
-                orderBy: {
-                    createdAt: 'desc'
-                }
-            });
-            return users;
+                    },
+                    orderBy: orderByMap[sortBy],
+                    ...(isPaginated ? { skip: (page - 1) * limit, take: limit } : {})
+                }),
+                prisma.utilisateur.count({ where })
+            ]);
+            return { items: users, total };
         }
         catch (error) {
             console.error('Erreur lors de la récupération des utilisateurs:', error);
@@ -113,7 +136,7 @@ class UserRepository {
         }
         catch (error) {
             console.error('Erreur lors de la suppression de l\'utilisateur:', error);
-            throw new Error('Impossible de supprimer l\'utilisateur');
+            throw error;
         }
     }
 }

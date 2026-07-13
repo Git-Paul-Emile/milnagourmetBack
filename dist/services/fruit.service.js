@@ -1,5 +1,8 @@
 import fruitRepository from '../repository/fruit.repository.js';
 import { FruitCreateSchema, FruitUpdateSchema } from '../validator/creation.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 class FruitService {
     fruitRepository = fruitRepository;
     async create(data) {
@@ -10,7 +13,7 @@ class FruitService {
             const existingFruits = await fruitRepository.findAll();
             const duplicate = existingFruits.find(fruit => fruit.nom.toLowerCase() === validatedData.nom.toLowerCase());
             if (duplicate) {
-                throw new Error('Un fruit avec ce nom existe déjà');
+                throw new AppError('Un fruit avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
             }
             const fruit = await fruitRepository.create(validatedData);
             console.log(`Fruit créé avec succès: ${fruit.nom}`);
@@ -18,6 +21,9 @@ class FruitService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la création du fruit:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -54,14 +60,14 @@ class FruitService {
             // Vérifier si le fruit existe
             const existingFruit = await fruitRepository.findById(id);
             if (!existingFruit) {
-                throw new Error('Fruit non trouvé');
+                throw new AppError('Fruit non trouvé', StatusCodes.NOT_FOUND);
             }
             // Vérifier si le nouveau nom n'est pas déjà utilisé par un autre fruit
             if (validatedData.nom) {
                 const allFruits = await fruitRepository.findAll();
                 const duplicate = allFruits.find(fruit => fruit.nom.toLowerCase() === validatedData.nom.toLowerCase() && fruit.id !== id);
                 if (duplicate) {
-                    throw new Error('Un fruit avec ce nom existe déjà');
+                    throw new AppError('Un fruit avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
                 }
             }
             const fruit = await fruitRepository.update(id, validatedData);
@@ -70,6 +76,9 @@ class FruitService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la mise à jour du fruit:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -78,7 +87,7 @@ class FruitService {
             // Vérifier si le fruit existe
             const existingFruit = await fruitRepository.findById(id);
             if (!existingFruit) {
-                throw new Error('Fruit non trouvé');
+                throw new AppError('Fruit non trouvé', StatusCodes.NOT_FOUND);
             }
             const fruit = await fruitRepository.delete(id);
             console.log(`Fruit supprimé avec succès: ${fruit.nom}`);

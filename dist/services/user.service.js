@@ -1,39 +1,45 @@
 import userRepository from '../repository/user.repository.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
 class UserService {
-    async getAllUsers() {
+    async getAllUsers(options = {}) {
         try {
-            const users = await userRepository.findAll();
+            const { items: users, total } = await userRepository.findAll(options);
             // Convertir vers le format attendu par le frontend
-            return users.map(user => ({
-                id: user.id.toString(),
-                name: user.nomComplet,
-                phone: user.telephone,
-                deliveryZoneId: user.zoneLivraisonId?.toString() || '',
-                role: user.role?.toLowerCase() || 'user',
-                blocked: Boolean(user.blocked),
-                createdAt: user.createdAt,
-                orders: user.commandes.map((cmd) => ({
-                    id: cmd.id.toString(),
-                    status: cmd.statut,
-                    total: cmd.montantTotal,
-                    date: cmd.creeLe.toISOString(),
-                    items: [],
-                    notes: '',
-                    customer: null
-                }))
-            }));
+            const items = users.map((user) => this.transformUser(user));
+            return { items, total };
         }
         catch (error) {
             console.error('Erreur dans le service lors de la récupération des utilisateurs:', error);
             throw error;
         }
     }
+    transformUser(user) {
+        return {
+            id: user.id.toString(),
+            name: user.nomComplet,
+            phone: user.telephone,
+            deliveryZoneId: user.zoneLivraisonId?.toString() || '',
+            role: user.role?.toLowerCase() || 'user',
+            blocked: Boolean(user.blocked),
+            createdAt: user.createdAt,
+            orders: user.commandes.map((cmd) => ({
+                id: cmd.id.toString(),
+                status: cmd.statut,
+                total: cmd.montantTotal,
+                date: cmd.creeLe.toISOString(),
+                items: [],
+                notes: '',
+                customer: null
+            }))
+        };
+    }
     async updateUser(id, data) {
         try {
             // Vérifier si l'utilisateur existe
             const existingUser = await userRepository.findById(id);
             if (!existingUser) {
-                throw new Error('Utilisateur non trouvé');
+                throw new AppError('Utilisateur non trouvé', StatusCodes.NOT_FOUND);
             }
             const payload = {};
             if (data.blocked !== undefined) {

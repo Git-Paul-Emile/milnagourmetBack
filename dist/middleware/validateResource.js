@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 const validateResource = (schema) => (req, res, next) => {
@@ -6,7 +7,7 @@ const validateResource = (schema) => (req, res, next) => {
         next();
     }
     catch (e) {
-        if (e.issues) {
+        if (e instanceof ZodError) {
             // Format Zod errors
             const errorMessage = e.issues.map((err) => err.message).join(', ');
             next(new AppError(errorMessage, StatusCodes.BAD_REQUEST));

@@ -1,7 +1,21 @@
 import { prisma } from "../config/database.js"
-import type { Produit } from "@prisma/client"
+import type { Produit, Prisma, CategorieProduit } from "@prisma/client"
 import type { ProductCreate, ProductUpdate } from "../validator/product.schema.js"
 
+export interface ProductListOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: CategorieProduit;
+  disponible?: boolean;
+  sortBy?: 'name' | 'price' | 'date';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginatedProducts {
+  items: Produit[];
+  total: number;
+}
 
 class ProductRepository {
 
@@ -20,15 +34,45 @@ class ProductRepository {
         }
     }
 
-    async findAll(): Promise<Produit[]> {
+    async findAll(options: ProductListOptions = {}): Promise<PaginatedProducts> {
         try {
-            const products = await prisma.produit.findMany({
+            const { page, limit, search, category, disponible, sortBy = 'date', sortOrder = 'desc' } = options;
+
+            const where: Prisma.ProduitWhereInput = {};
+            if (category) {
+              where.categorie = category;
+            }
+            if (disponible !== undefined) {
+              where.disponible = disponible;
+            }
+            if (search) {
+              where.OR = [
+                { nom: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } }
+              ];
+            }
+
+            const orderByMap: Record<'name' | 'price' | 'date', Prisma.ProduitOrderByWithRelationInput> = {
+              name: { nom: sortOrder },
+              price: { prix: sortOrder },
+              date: { creeLe: sortOrder }
+            };
+
+            const isPaginated = page !== undefined && limit !== undefined;
+
+            const [products, total] = await Promise.all([
+              prisma.produit.findMany({
+                where,
                 include: {
                     categorieProduit: true
                 },
-                orderBy: { creeLe: 'desc' }
-            });
-            return products;
+                orderBy: orderByMap[sortBy],
+                ...(isPaginated ? { skip: (page - 1) * limit, take: limit } : {})
+              }),
+              prisma.produit.count({ where })
+            ]);
+
+            return { items: products, total };
         } catch (error) {
             console.error('Erreur lors de la récupération des produits:', error);
             throw new Error('Impossible de récupérer les produits');

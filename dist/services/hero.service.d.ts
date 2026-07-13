@@ -5,8 +5,8 @@ declare class HeroService {
         badge: string;
         banner: string | null;
         features: {
-            title: any;
-            description: any;
+            title: string;
+            description: string;
         }[];
     }>;
     updateHeroData(data: {
@@ -20,8 +20,8 @@ declare class HeroService {
         badge: string;
         banner: string | null;
         features: {
-            title: any;
-            description: any;
+            title: string;
+            description: string;
         }[];
     }>;
 }

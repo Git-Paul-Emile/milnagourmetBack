@@ -152,7 +152,7 @@ class AuthController {
   // Déconnexion de tous les appareils
   async logoutAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -177,7 +177,7 @@ class AuthController {
   // Récupérer le profil de l'utilisateur connecté (/me)
   async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -206,7 +206,7 @@ class AuthController {
   // Mettre à jour le profil de l'utilisateur connecté
   async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);
@@ -238,7 +238,7 @@ class AuthController {
   // Supprimer le compte de l'utilisateur connecté
   async deleteAccount(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         throw new AppError('Utilisateur non authentifié', StatusCodes.UNAUTHORIZED);

@@ -1,5 +1,8 @@
 import tailleCreationRepository from '../repository/tailleCreation.repository.js';
 import { TailleCreationCreateSchema, TailleCreationUpdateSchema } from '../validator/creation.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 class TailleCreationService {
     tailleCreationRepository = tailleCreationRepository;
     async create(data) {
@@ -10,7 +13,7 @@ class TailleCreationService {
             const existingTailles = await tailleCreationRepository.findAll();
             const duplicate = existingTailles.find(taille => taille.nom.toLowerCase() === validatedData.nom.toLowerCase());
             if (duplicate) {
-                throw new Error('Une taille avec ce nom existe déjà');
+                throw new AppError('Une taille avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
             }
             const taille = await tailleCreationRepository.create(validatedData);
             console.log(`Taille créée avec succès: ${taille.nom}`);
@@ -18,6 +21,9 @@ class TailleCreationService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la création de la taille:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -54,14 +60,14 @@ class TailleCreationService {
             // Vérifier si la taille existe
             const existingTaille = await tailleCreationRepository.findById(id);
             if (!existingTaille) {
-                throw new Error('Taille non trouvée');
+                throw new AppError('Taille non trouvée', StatusCodes.NOT_FOUND);
             }
             // Vérifier si le nouveau nom n'est pas déjà utilisé par une autre taille
             if (validatedData.nom) {
                 const allTailles = await tailleCreationRepository.findAll();
                 const duplicate = allTailles.find(taille => taille.nom.toLowerCase() === validatedData.nom.toLowerCase() && taille.id !== id);
                 if (duplicate) {
-                    throw new Error('Une taille avec ce nom existe déjà');
+                    throw new AppError('Une taille avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
                 }
             }
             const taille = await tailleCreationRepository.update(id, validatedData);
@@ -70,6 +76,9 @@ class TailleCreationService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la mise à jour de la taille:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -78,7 +87,7 @@ class TailleCreationService {
             // Vérifier si la taille existe
             const existingTaille = await tailleCreationRepository.findById(id);
             if (!existingTaille) {
-                throw new Error('Taille non trouvée');
+                throw new AppError('Taille non trouvée', StatusCodes.NOT_FOUND);
             }
             const taille = await tailleCreationRepository.delete(id);
             console.log(`Taille supprimée avec succès: ${taille.nom}`);

@@ -2,6 +2,9 @@ import tailleCreationRepository from '../repository/tailleCreation.repository.js
 import type { TailleCreation } from '@prisma/client';
 import type { TailleCreationCreate, TailleCreationUpdate } from '../validator/creation.schema.js';
 import { TailleCreationCreateSchema, TailleCreationUpdateSchema } from '../validator/creation.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 
 class TailleCreationService {
   private tailleCreationRepository = tailleCreationRepository;
@@ -18,7 +21,7 @@ class TailleCreationService {
       );
 
       if (duplicate) {
-        throw new Error('Une taille avec ce nom existe déjà');
+        throw new AppError('Une taille avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
       }
 
       const taille = await tailleCreationRepository.create(validatedData);
@@ -26,6 +29,9 @@ class TailleCreationService {
       return taille;
     } catch (error) {
       console.error('Erreur dans le service lors de la création de la taille:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
@@ -64,7 +70,7 @@ class TailleCreationService {
       // Vérifier si la taille existe
       const existingTaille = await tailleCreationRepository.findById(id);
       if (!existingTaille) {
-        throw new Error('Taille non trouvée');
+        throw new AppError('Taille non trouvée', StatusCodes.NOT_FOUND);
       }
 
       // Vérifier si le nouveau nom n'est pas déjà utilisé par une autre taille
@@ -75,7 +81,7 @@ class TailleCreationService {
         );
 
         if (duplicate) {
-          throw new Error('Une taille avec ce nom existe déjà');
+          throw new AppError('Une taille avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
         }
       }
 
@@ -84,6 +90,9 @@ class TailleCreationService {
       return taille;
     } catch (error) {
       console.error('Erreur dans le service lors de la mise à jour de la taille:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
@@ -93,7 +102,7 @@ class TailleCreationService {
       // Vérifier si la taille existe
       const existingTaille = await tailleCreationRepository.findById(id);
       if (!existingTaille) {
-        throw new Error('Taille non trouvée');
+        throw new AppError('Taille non trouvée', StatusCodes.NOT_FOUND);
       }
 
       const taille = await tailleCreationRepository.delete(id);

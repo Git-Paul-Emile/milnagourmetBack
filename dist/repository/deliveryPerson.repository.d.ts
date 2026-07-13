@@ -1,4 +1,4 @@
-import type { Livreur } from "@prisma/client";
+import type { Livreur, Commande } from "@prisma/client";
 declare class DeliveryPersonRepository {
     findAll(): Promise<(Livreur & {
         commandes: {
@@ -9,7 +9,7 @@ declare class DeliveryPersonRepository {
         }[];
     })[]>;
     findById(id: string): Promise<(Livreur & {
-        commandes: any[];
+        commandes: Commande[];
     }) | null>;
     create(data: {
         nomComplet: string;

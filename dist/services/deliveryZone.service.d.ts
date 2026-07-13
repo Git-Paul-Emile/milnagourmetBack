@@ -1,17 +1,17 @@
 declare class DeliveryZoneService {
     getAllDeliveryZones(): Promise<{
-        id: any;
-        name: any;
-        deliveryFee: any;
-        estimatedTime: any;
-        active: any;
+        id: string;
+        name: string;
+        deliveryFee: number;
+        estimatedTime: string;
+        active: boolean;
     }[]>;
     getAllActive(): Promise<{
-        id: any;
-        name: any;
-        deliveryFee: any;
-        estimatedTime: any;
-        active: any;
+        id: string;
+        name: string;
+        deliveryFee: number;
+        estimatedTime: string;
+        active: boolean;
     }[]>;
     getAllDeliveryZonesWithOrderCounts(): Promise<{
         id: string;

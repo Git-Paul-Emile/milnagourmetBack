@@ -2,6 +2,9 @@ import fruitRepository from '../repository/fruit.repository.js';
 import type { Fruit } from '@prisma/client';
 import type { FruitCreate, FruitUpdate } from '../validator/creation.schema.js';
 import { FruitCreateSchema, FruitUpdateSchema } from '../validator/creation.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 
 class FruitService {
   private fruitRepository = fruitRepository;
@@ -18,7 +21,7 @@ class FruitService {
       );
 
       if (duplicate) {
-        throw new Error('Un fruit avec ce nom existe déjà');
+        throw new AppError('Un fruit avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
       }
 
       const fruit = await fruitRepository.create(validatedData);
@@ -26,6 +29,9 @@ class FruitService {
       return fruit;
     } catch (error) {
       console.error('Erreur dans le service lors de la création du fruit:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
@@ -64,7 +70,7 @@ class FruitService {
       // Vérifier si le fruit existe
       const existingFruit = await fruitRepository.findById(id);
       if (!existingFruit) {
-        throw new Error('Fruit non trouvé');
+        throw new AppError('Fruit non trouvé', StatusCodes.NOT_FOUND);
       }
 
       // Vérifier si le nouveau nom n'est pas déjà utilisé par un autre fruit
@@ -75,7 +81,7 @@ class FruitService {
         );
 
         if (duplicate) {
-          throw new Error('Un fruit avec ce nom existe déjà');
+          throw new AppError('Un fruit avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
         }
       }
 
@@ -84,6 +90,9 @@ class FruitService {
       return fruit;
     } catch (error) {
       console.error('Erreur dans le service lors de la mise à jour du fruit:', error);
+      if (error instanceof ZodError) {
+        throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+      }
       throw error;
     }
   }
@@ -93,7 +102,7 @@ class FruitService {
       // Vérifier si le fruit existe
       const existingFruit = await fruitRepository.findById(id);
       if (!existingFruit) {
-        throw new Error('Fruit non trouvé');
+        throw new AppError('Fruit non trouvé', StatusCodes.NOT_FOUND);
       }
 
       const fruit = await fruitRepository.delete(id);

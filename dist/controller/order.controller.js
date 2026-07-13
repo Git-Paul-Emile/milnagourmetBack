@@ -1,10 +1,12 @@
+import { ZodError } from 'zod';
 import { prisma } from '../config/database.js';
 import orderRepository from '../repository/order.repository.js';
-import userRepository from '../repository/user.repository.js';
-import { jsonResponse, AppError } from '../utils/index.js';
+import { jsonResponse, AppError, buildPaginationMeta } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { WhatsAppService } from '../services/whatsapp.service.js';
 import { LoyaltyService } from '../services/loyalty.service.js';
+import deliveryZoneService from '../services/deliveryZone.service.js';
+import { orderQuerySchema } from '../validator/query.schema.js';
 // Fonction helper pour adapter une commande au format frontend
 async function adaptOrderToFrontend(order) {
     // Mapper les éléments de commande (produits normaux)
@@ -53,8 +55,7 @@ async function adaptOrderToFrontend(order) {
                 maxSauces: creation.taille.maxSauces || 0,
                 cerealesAutorise: creation.taille.cerealesAutorise || false,
                 active: creation.taille.active || true,
-                ordreAffichage: creation.taille.ordreAffichage || 0,
-                creeLe: creation.taille.creeLe?.toISOString() || new Date().toISOString()
+                ordreAffichage: creation.taille.ordreAffichage || 0
             },
             selectedFruits: creation.fruits?.map((f) => f.fruit.nom) || [],
             selectedSauces: creation.sauces?.map((s) => s.sauce.nom) || [],
@@ -111,155 +112,152 @@ class OrderController {
     // Créer une nouvelle commande
     async create(req, res, next) {
         try {
-            console.log('[ORDER CREATION] Démarrage de la création de commande');
             const orderData = req.body;
             const utilisateurId = orderData.customer ? parseInt(orderData.customer.id) : undefined;
-            console.log('[ORDER CREATION] Données reçues:', { utilisateurId, total: orderData.total, itemsCount: orderData.items.length });
-            // Zone de livraison supprimée selon les nouvelles exigences
-            // Log détaillé des items reçus
-            console.log('[ORDER CREATION] Items reçus:');
-            orderData.items.forEach((item, index) => {
-                console.log(`[ORDER CREATION] Item ${index + 1}:`, {
-                    id: item.id,
-                    name: item.name,
-                    hasCustomCreation: !!item.customCreation,
-                    customCreationKeys: item.customCreation ? Object.keys(item.customCreation) : null,
-                    selectedFruits: item.customCreation?.selectedFruits,
-                    selectedSauces: item.customCreation?.selectedSauces,
-                    selectedCereales: item.customCreation?.selectedCereales
-                });
-            });
             // Séparer les produits et les créations personnalisées
             const products = orderData.items.filter(item => item.product && !item.id.startsWith('creation'));
             const creations = orderData.items.filter(item => item.customCreation || item.id.startsWith('creation'));
-            console.log('[ORDER CREATION] Produits séparés:', { productsCount: products.length, creationsCount: creations.length });
-            // Adapter les données du frontend au format de la base de données
+            if (products.length === 0 && creations.length === 0) {
+                throw new AppError('La commande ne contient aucun article', StatusCodes.BAD_REQUEST);
+            }
+            // Résoudre le prix officiel de chaque produit depuis la base (ne jamais faire confiance au prix envoyé par le client)
+            let montantProduits = 0;
+            const resolvedElements = await Promise.all(products.map(async (item) => {
+                const produitId = parseInt(item.id);
+                const produit = await prisma.produit.findUnique({ where: { id: produitId } });
+                if (!produit || !produit.disponible) {
+                    throw new AppError(`Produit indisponible : ${item.name}`, StatusCodes.BAD_REQUEST);
+                }
+                montantProduits += produit.prix * item.quantity;
+                return { produitId, quantite: item.quantity, prix: produit.prix };
+            }));
+            // Résoudre le prix officiel de chaque création (taille) et les ingrédients sélectionnés
+            let montantCreations = 0;
+            const resolvedCreations = await Promise.all(creations.map(async (item) => {
+                const tailleId = item.customCreation?.size?.id;
+                const taille = tailleId ? await prisma.tailleCreation.findUnique({ where: { id: tailleId } }) : null;
+                if (!taille || !taille.active) {
+                    throw new AppError(`Taille de création invalide : ${item.customCreation?.size?.nom || ''}`, StatusCodes.BAD_REQUEST);
+                }
+                const fruits = item.customCreation?.selectedFruits ?
+                    (await Promise.all(item.customCreation.selectedFruits.map(async (name) => {
+                        const fruit = await prisma.fruit.findFirst({ where: { nom: name } });
+                        return fruit ? { fruitId: fruit.id } : null;
+                    }))).filter((f) => f !== null) : [];
+                const sauces = item.customCreation?.selectedSauces ?
+                    (await Promise.all(item.customCreation.selectedSauces.map(async (name) => {
+                        const sauce = await prisma.sauce.findFirst({ where: { nom: name } });
+                        return sauce ? { sauceId: sauce.id } : null;
+                    }))).filter((s) => s !== null) : [];
+                const cereales = item.customCreation?.selectedCereales ?
+                    (await Promise.all(item.customCreation.selectedCereales.map(async (name) => {
+                        const cereale = await prisma.cereale.findFirst({ where: { nom: name } });
+                        return cereale ? { cerealeId: cereale.id } : null;
+                    }))).filter((c) => c !== null) : [];
+                montantCreations += taille.prix * item.quantity;
+                return { tailleId: taille.id, quantite: item.quantity, prix: taille.prix, fruits, sauces, cereales };
+            }));
+            // Résoudre les frais de livraison depuis la zone en base (ne jamais faire confiance au montant envoyé par le client)
+            let fraisLivraison = 0;
+            if (utilisateurId) {
+                const utilisateur = await prisma.utilisateur.findUnique({ where: { id: utilisateurId }, select: { zoneLivraisonId: true } });
+                if (utilisateur?.zoneLivraisonId) {
+                    const zone = await deliveryZoneService.getDeliveryZoneById(utilisateur.zoneLivraisonId);
+                    fraisLivraison = zone.deliveryFee;
+                }
+            }
+            else {
+                const zoneId = orderData.deliveryZoneId ? parseInt(orderData.deliveryZoneId) : NaN;
+                if (isNaN(zoneId)) {
+                    throw new AppError('Zone de livraison requise', StatusCodes.BAD_REQUEST);
+                }
+                const zone = await deliveryZoneService.getDeliveryZoneById(zoneId).catch(() => null);
+                if (!zone || !zone.active) {
+                    throw new AppError('Zone de livraison invalide', StatusCodes.BAD_REQUEST);
+                }
+                fraisLivraison = zone.deliveryFee;
+            }
+            const montantAvantRemise = montantProduits + montantCreations + fraisLivraison;
+            // Appliquer la remise fidélité si des points sont utilisés (utilisateur connecté uniquement, jamais pour un invité)
+            let remise = 0;
+            if (utilisateurId && orderData.pointsUsed && orderData.pointsUsed > 0) {
+                remise = await LoyaltyService.usePoints(utilisateurId, orderData.pointsUsed);
+            }
             const dbOrderData = {
                 numeroCommande: `CMD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 utilisateurId,
                 nomClient: orderData.customer?.name || 'Client anonyme',
                 telephoneClient: orderData.customer?.phone || 'Non spécifié',
-                statut: 'RECU', // Forcer le statut RECU par défaut
-                montantTotal: orderData.total, // Le total incluant les frais de livraison et les réductions
-                fraisLivraison: orderData.deliveryFee || 0,
+                statut: 'RECU',
+                montantTotal: Math.max(0, montantAvantRemise - remise),
+                fraisLivraison,
                 notes: orderData.notes || '',
-                elements: products.map(item => ({
-                    produitId: parseInt(item.id),
-                    quantite: item.quantity,
-                    prix: item.price
-                })),
-                creations: await Promise.all(creations.map(async (item) => {
-                    // Pour les créations, récupérer les IDs des ingrédients
-                    const tailleId = item.customCreation?.size?.id || 1; // Valeur par défaut
-                    // Résoudre les IDs des fruits, sauces, céréales par nom
-                    const fruits = item.customCreation?.selectedFruits ?
-                        (await Promise.all(item.customCreation.selectedFruits.map(async (name) => {
-                            const fruit = await prisma.fruit.findFirst({ where: { nom: name } });
-                            return fruit ? { fruitId: fruit.id } : null;
-                        }))).filter(Boolean) : [];
-                    const sauces = item.customCreation?.selectedSauces ?
-                        (await Promise.all(item.customCreation.selectedSauces.map(async (name) => {
-                            const sauce = await prisma.sauce.findFirst({ where: { nom: name } });
-                            return sauce ? { sauceId: sauce.id } : null;
-                        }))).filter(Boolean) : [];
-                    const cereales = item.customCreation?.selectedCereales ?
-                        (await Promise.all(item.customCreation.selectedCereales.map(async (name) => {
-                            const cereale = await prisma.cereale.findFirst({ where: { nom: name } });
-                            return cereale ? { cerealeId: cereale.id } : null;
-                        }))).filter(Boolean) : [];
-                    return {
-                        tailleId,
-                        quantite: item.quantity,
-                        prix: item.price,
-                        fruits,
-                        sauces,
-                        cereales
-                    };
-                }))
+                elements: resolvedElements,
+                creations: resolvedCreations
             };
-            // Log détaillé des créations personnalisées
-            if (creations.length > 0) {
-                console.log('[ORDER CREATION] Détails des créations personnalisées:');
-                creations.forEach((creation, index) => {
-                    console.log(`[ORDER CREATION] Création ${index + 1}:`, {
-                        taille: creation.customCreation?.size?.nom || 'Non spécifiée',
-                        quantite: creation.quantity,
-                        prix: creation.price,
-                        fruits: creation.customCreation?.selectedFruits || [],
-                        sauces: creation.customCreation?.selectedSauces || [],
-                        cereales: creation.customCreation?.selectedCereales || []
-                    });
-                });
-            }
-            console.log('[ORDER CREATION] Données préparées pour la DB:', { utilisateurId: dbOrderData.utilisateurId, montantTotal: dbOrderData.montantTotal, elementsCount: dbOrderData.elements.length, creationsCount: dbOrderData.creations.length });
-            console.log('[ORDER CREATION] Création de la commande en base de données...');
             const order = await orderRepository.create(dbOrderData);
-            console.log('[ORDER CREATION] Commande créée avec succès, ID:', order.id);
             const fullOrder = await orderRepository.findById(order.id);
-            // Envoi asynchrone de la notification WhatsApp au vendeur
-            WhatsAppService.sendOrderNotification(fullOrder).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
-            // Vider le panier de l'utilisateur après la création de la commande
-            if (dbOrderData.utilisateurId) {
-                console.log('[ORDER CREATION] Vidage du panier pour l\'utilisateur:', dbOrderData.utilisateurId);
+            // Envoi asynchrone de la notification WhatsApp au vendeur (n'échoue jamais la commande)
+            if (fullOrder) {
+                WhatsAppService.sendOrderNotification(fullOrder).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
+            }
+            // Vider le panier et solder les points de fidélité de l'utilisateur connecté
+            if (utilisateurId) {
                 const cartService = (await import('../services/cart.service.js')).default;
-                await cartService.clearCart(dbOrderData.utilisateurId);
-                console.log('[ORDER CREATION] Panier vidé avec succès');
-                // Utiliser les points de fidélité si fournis
-                if (orderData.pointsUsed && orderData.pointsUsed > 0) {
-                    try {
-                        console.log('[ORDER CREATION] Utilisation des points de fidélité:', orderData.pointsUsed);
-                        await LoyaltyService.usePoints(dbOrderData.utilisateurId, orderData.pointsUsed, order.id);
-                        console.log('[ORDER CREATION] Points de fidélité utilisés avec succès');
-                    }
-                    catch (error) {
-                        console.error('[ORDER CREATION] Erreur lors de l\'utilisation des points de fidélité:', error);
-                        // Ne pas échouer la commande pour une erreur de fidélité
-                    }
+                await cartService.clearCart(utilisateurId);
+                if (remise > 0) {
+                    await LoyaltyService.updatePointsHistoryWithOrderId(utilisateurId, order.id, orderData.pointsUsed);
                 }
-                // Ajouter les points de fidélité gagnés
                 try {
-                    console.log('[ORDER CREATION] Ajout des points de fidélité pour l\'utilisateur:', dbOrderData.utilisateurId);
-                    // Ne pas ajouter de points sur le montant déjà réduit - ajouter sur le montant original
-                    const originalAmount = orderData.total + (orderData.deliveryFee || 0);
-                    await LoyaltyService.addPoints(dbOrderData.utilisateurId, order.id, originalAmount);
-                    console.log('[ORDER CREATION] Points de fidélité ajoutés avec succès');
+                    // Points gagnés sur le montant avant remise fidélité, pour éviter un effet cumulatif
+                    await LoyaltyService.addPoints(utilisateurId, order.id, montantAvantRemise);
                 }
                 catch (error) {
                     console.error('[ORDER CREATION] Erreur lors de l\'ajout des points de fidélité:', error);
-                    // Ne pas échouer la commande pour une erreur de fidélité
                 }
             }
-            // Adapter la réponse pour le frontend
-            console.log('[ORDER CREATION] Adaptation de la commande pour le frontend...');
             const adaptedOrder = await adaptOrderToFrontend(order);
-            console.log('[ORDER CREATION] Adaptation terminée');
-            console.log('[ORDER CREATION] Envoi de la réponse de succès');
             res.status(StatusCodes.CREATED).json(jsonResponse({
                 status: 'success',
                 message: 'Commande créée avec succès',
                 data: adaptedOrder
             }));
-            console.log('[ORDER CREATION] Création de commande terminée avec succès');
         }
         catch (error) {
-            console.error('[ORDER CREATION] Erreur lors de la création de commande:', error);
             next(error);
         }
     }
-    // Récupérer toutes les commandes
+    // Récupérer toutes les commandes (pagination/recherche/filtre/tri optionnels via query params)
     async getAll(req, res, next) {
         try {
-            const orders = await orderRepository.findAll();
+            const query = orderQuerySchema.parse(req.query);
+            const { page, limit, search, sortBy, sortOrder } = query;
+            const status = query.status ? query.status.toUpperCase() : undefined;
+            const { items: orders, total } = await orderRepository.findAll({
+                page,
+                limit,
+                search,
+                status,
+                sortBy,
+                sortOrder
+            });
             // Adapter les données pour le frontend
             const adaptedOrders = await Promise.all(orders.map(order => adaptOrderToFrontend(order)));
+            const isPaginated = page !== undefined && limit !== undefined;
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: 'Commandes récupérées avec succès',
-                data: adaptedOrders
+                data: adaptedOrders,
+                meta: isPaginated ? buildPaginationMeta(page, limit, total) : undefined
             }));
         }
         catch (error) {
-            next(error);
+            if (error instanceof ZodError) {
+                next(new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST));
+            }
+            else {
+                next(error);
+            }
         }
     }
     // Récupérer une commande par ID
@@ -328,7 +326,24 @@ class OrderController {
             if (!status) {
                 throw new AppError('Statut requis', StatusCodes.BAD_REQUEST);
             }
-            const order = await orderRepository.updateStatus(id, status.toUpperCase());
+            const newStatus = String(status).toUpperCase();
+            const validStatuses = ['RECU', 'LIVREE', 'ANNULEE'];
+            if (!validStatuses.includes(newStatus)) {
+                throw new AppError('Statut invalide', StatusCodes.BAD_REQUEST);
+            }
+            const existingOrder = await orderRepository.findById(id);
+            if (!existingOrder) {
+                throw new AppError('Commande non trouvée', StatusCodes.NOT_FOUND);
+            }
+            // Seule une commande RECU peut changer de statut : LIVREE/ANNULEE sont des états terminaux
+            if (existingOrder.statut !== 'RECU' && existingOrder.statut !== newStatus) {
+                throw new AppError(`Impossible de modifier le statut d'une commande déjà ${existingOrder.statut === 'LIVREE' ? 'livrée' : 'annulée'}`, StatusCodes.BAD_REQUEST);
+            }
+            const order = await orderRepository.updateStatus(id, newStatus);
+            // Notification WhatsApp asynchrone au client (n'échoue jamais la mise à jour)
+            if (newStatus === 'LIVREE' || newStatus === 'ANNULEE') {
+                WhatsAppService.sendCustomerStatusNotification(order, newStatus).catch((error) => console.error('Erreur notification client ignorée :', error));
+            }
             // Adapter les données pour le frontend
             const adaptedOrder = await adaptOrderToFrontend(order);
             res.status(StatusCodes.OK).json(jsonResponse({
@@ -341,6 +356,93 @@ class OrderController {
             next(error);
         }
     }
+    // Assigner (ou retirer) un livreur à une commande
+    async assignDeliveryPerson(req, res, next) {
+        try {
+            const idParam = req.params.id;
+            if (!idParam) {
+                throw new AppError('ID de commande manquant', StatusCodes.BAD_REQUEST);
+            }
+            const id = parseInt(idParam);
+            if (isNaN(id)) {
+                throw new AppError('ID de commande invalide', StatusCodes.BAD_REQUEST);
+            }
+            const { livreurId } = req.body;
+            let parsedLivreurId = null;
+            if (livreurId !== null && livreurId !== undefined && livreurId !== '') {
+                parsedLivreurId = parseInt(livreurId);
+                if (isNaN(parsedLivreurId)) {
+                    throw new AppError('ID de livreur invalide', StatusCodes.BAD_REQUEST);
+                }
+                // Vérifie que le livreur existe (lève une 404 sinon)
+                const deliveryPersonService = (await import('../services/deliveryPerson.service.js')).default;
+                await deliveryPersonService.getDeliveryPersonById(parsedLivreurId.toString());
+            }
+            const order = await orderRepository.assignDeliveryPerson(id, parsedLivreurId);
+            const adaptedOrder = await adaptOrderToFrontend(order);
+            res.status(StatusCodes.OK).json(jsonResponse({
+                status: 'success',
+                message: parsedLivreurId ? 'Livreur assigné avec succès' : 'Livreur retiré avec succès',
+                data: adaptedOrder
+            }));
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    // Récupérer les revenus agrégés par période (ADMIN, pour les graphiques analytics)
+    async getRevenue(req, res, next) {
+        try {
+            const { period } = req.params;
+            if (period !== 'day' && period !== 'week' && period !== 'month') {
+                throw new AppError('Période invalide (day, week ou month)', StatusCodes.BAD_REQUEST);
+            }
+            const { startDate, endDate } = req.query;
+            const where = { statut: { not: 'ANNULEE' } };
+            if (startDate || endDate) {
+                where.creeLe = {};
+                if (typeof startDate === 'string')
+                    where.creeLe.gte = new Date(startDate);
+                if (typeof endDate === 'string')
+                    where.creeLe.lte = new Date(endDate);
+            }
+            const orders = await prisma.commande.findMany({
+                where,
+                select: { creeLe: true, montantTotal: true },
+                orderBy: { creeLe: 'asc' }
+            });
+            const grouped = new Map();
+            for (const order of orders) {
+                const key = getRevenueGroupKey(order.creeLe, period);
+                grouped.set(key, (grouped.get(key) || 0) + order.montantTotal);
+            }
+            const data = Array.from(grouped.entries())
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, revenue]) => ({ date, revenue }));
+            res.status(StatusCodes.OK).json(jsonResponse({
+                status: 'success',
+                message: 'Revenus récupérés avec succès',
+                data
+            }));
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+}
+// Regroupe une date en clé jour (YYYY-MM-DD), semaine (lundi de la semaine) ou mois (YYYY-MM)
+function getRevenueGroupKey(date, period) {
+    if (period === 'month') {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+    if (period === 'week') {
+        const monday = new Date(date);
+        const dayOfWeek = monday.getDay();
+        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Reculer jusqu'au lundi
+        monday.setDate(monday.getDate() + diff);
+        return monday.toISOString().slice(0, 10);
+    }
+    return date.toISOString().slice(0, 10);
 }
 export default new OrderController();
 //# sourceMappingURL=order.controller.js.map

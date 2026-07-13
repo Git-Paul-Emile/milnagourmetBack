@@ -1,11 +1,23 @@
-import type { Commande, ElementCommande, CreationPersonnalisee, Livreur, Produit } from "@prisma/client";
+import type { Commande, ElementCommande, CreationPersonnalisee, Utilisateur, Livreur, Produit, TailleCreation, StatutCommande } from "@prisma/client";
+export interface OrderListOptions {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: StatutCommande;
+    sortBy?: 'date' | 'total' | 'status';
+    sortOrder?: 'asc' | 'desc';
+}
+export interface PaginatedOrders {
+    items: CommandeWithRelations[];
+    total: number;
+}
 export type CommandeWithRelations = Commande & {
-    utilisateur: any;
+    utilisateur: Utilisateur | null;
     elements: (ElementCommande & {
         produit: Produit;
     })[];
     creationsPersonnalisees: (CreationPersonnalisee & {
-        taille: any;
+        taille: TailleCreation;
         fruits: {
             fruit: {
                 nom: string;
@@ -25,6 +37,7 @@ export type CommandeWithRelations = Commande & {
     livreur: Livreur | null;
 };
 interface CreateOrderData {
+    numeroCommande: string;
     utilisateurId?: number;
     nomClient: string;
     telephoneClient: string;
@@ -54,10 +67,11 @@ interface CreateOrderData {
 }
 declare class OrderRepository {
     create(data: CreateOrderData): Promise<CommandeWithRelations>;
-    findAll(): Promise<CommandeWithRelations[]>;
+    findAll(options?: OrderListOptions): Promise<PaginatedOrders>;
     findById(id: number): Promise<CommandeWithRelations | null>;
     findByUserId(utilisateurId: number): Promise<CommandeWithRelations[]>;
-    updateStatus(id: number, statut: string): Promise<CommandeWithRelations>;
+    updateStatus(id: number, statut: StatutCommande): Promise<CommandeWithRelations>;
+    assignDeliveryPerson(id: number, livreurId: number | null): Promise<CommandeWithRelations>;
 }
 declare const _default: OrderRepository;
 export default _default;

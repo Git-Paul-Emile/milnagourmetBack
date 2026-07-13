@@ -568,7 +568,7 @@ class SiteController {
         'Dimanche': 'sunday'
       };
 
-      hours.forEach((hour: any) => {
+      (hours as Array<{ day: string; open: string; close: string; closed: boolean }>).forEach((hour) => {
         const dayKey = dayMap[hour.day] || hour.day.toLowerCase();
         hoursMap[dayKey] = {
           open: hour.open,

@@ -1,4 +1,6 @@
 import deliveryZoneRepository from '../repository/deliveryZone.repository.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
 class DeliveryZoneService {
     async getAllDeliveryZones() {
         try {
@@ -57,7 +59,7 @@ class DeliveryZoneService {
         try {
             const zone = await deliveryZoneRepository.findById(id);
             if (!zone) {
-                throw new Error('Zone de livraison non trouvée');
+                throw new AppError('Zone de livraison non trouvée', StatusCodes.NOT_FOUND);
             }
             return {
                 id: zone.id.toString(),

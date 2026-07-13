@@ -1,6 +1,8 @@
+import { ZodError } from 'zod';
 import productService from '../services/product.service.js';
-import { jsonResponse, AppError } from '../utils/index.js';
+import { jsonResponse, AppError, buildPaginationMeta } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
+import { productQuerySchema } from '../validator/query.schema.js';
 class ProductController {
     productService = productService;
     // Créer un nouveau produit
@@ -17,18 +19,45 @@ class ProductController {
             next(error);
         }
     }
-    // Récupérer tous les produits
+    // Récupérer tous les produits (pagination/recherche/filtre/tri optionnels via query params)
     async findAll(req, res, next) {
         try {
-            const products = await productService.findAll();
+            const query = productQuerySchema.parse(req.query);
+            const { page, limit, search, sortBy, sortOrder } = query;
+            let category;
+            if (query.category) {
+                const normalized = query.category.toUpperCase();
+                const validCategories = ['CREMEUX', 'LIQUIDE', 'CREATION'];
+                if (!validCategories.includes(normalized)) {
+                    throw new AppError('Catégorie invalide', StatusCodes.BAD_REQUEST);
+                }
+                category = normalized;
+            }
+            const disponible = query.disponible !== undefined ? query.disponible === 'true' : undefined;
+            const { items: products, total } = await productService.findAll({
+                page,
+                limit,
+                search,
+                category,
+                disponible,
+                sortBy,
+                sortOrder
+            });
+            const isPaginated = page !== undefined && limit !== undefined;
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: `${products.length} produit(s) trouvé(s)`,
-                data: products
+                data: products,
+                meta: isPaginated ? buildPaginationMeta(page, limit, total) : undefined
             }));
         }
         catch (error) {
-            next(error);
+            if (error instanceof ZodError) {
+                next(new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST));
+            }
+            else {
+                next(error);
+            }
         }
     }
     // Récupérer un produit par ID

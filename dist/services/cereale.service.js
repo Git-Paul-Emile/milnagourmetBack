@@ -1,5 +1,8 @@
 import cerealeRepository from '../repository/cereale.repository.js';
 import { CerealeCreateSchema, CerealeUpdateSchema } from '../validator/creation.schema.js';
+import { AppError } from '../utils/AppError.js';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 class CerealeService {
     cerealeRepository = cerealeRepository;
     async create(data) {
@@ -10,7 +13,7 @@ class CerealeService {
             const existingCereales = await cerealeRepository.findAll();
             const duplicate = existingCereales.find(cereale => cereale.nom.toLowerCase() === validatedData.nom.toLowerCase());
             if (duplicate) {
-                throw new Error('Une céréale avec ce nom existe déjà');
+                throw new AppError('Une céréale avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
             }
             const cereale = await cerealeRepository.create(validatedData);
             console.log(`Céréale créée avec succès: ${cereale.nom}`);
@@ -18,6 +21,9 @@ class CerealeService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la création de la céréale:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -54,14 +60,14 @@ class CerealeService {
             // Vérifier si la céréale existe
             const existingCereale = await cerealeRepository.findById(id);
             if (!existingCereale) {
-                throw new Error('Céréale non trouvée');
+                throw new AppError('Céréale non trouvée', StatusCodes.NOT_FOUND);
             }
             // Vérifier si le nouveau nom n'est pas déjà utilisé par une autre céréale
             if (validatedData.nom) {
                 const allCereales = await cerealeRepository.findAll();
                 const duplicate = allCereales.find(cereale => cereale.nom.toLowerCase() === validatedData.nom.toLowerCase() && cereale.id !== id);
                 if (duplicate) {
-                    throw new Error('Une céréale avec ce nom existe déjà');
+                    throw new AppError('Une céréale avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
                 }
             }
             const cereale = await cerealeRepository.update(id, validatedData);
@@ -70,6 +76,9 @@ class CerealeService {
         }
         catch (error) {
             console.error('Erreur dans le service lors de la mise à jour de la céréale:', error);
+            if (error instanceof ZodError) {
+                throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
+            }
             throw error;
         }
     }
@@ -78,7 +87,7 @@ class CerealeService {
             // Vérifier si la céréale existe
             const existingCereale = await cerealeRepository.findById(id);
             if (!existingCereale) {
-                throw new Error('Céréale non trouvée');
+                throw new AppError('Céréale non trouvée', StatusCodes.NOT_FOUND);
             }
             const cereale = await cerealeRepository.delete(id);
             console.log(`Céréale supprimée avec succès: ${cereale.nom}`);

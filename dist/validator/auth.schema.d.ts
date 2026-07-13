@@ -5,6 +5,21 @@ export declare const registerSchema: z.ZodObject<{
     zoneLivraisonId: z.ZodPipe<z.ZodString, z.ZodTransform<number, string>>;
     password: z.ZodString;
     confirmPassword: z.ZodString;
+    guestCart: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        price: z.ZodNumber;
+        quantity: z.ZodNumber;
+        image: z.ZodOptional<z.ZodString>;
+        customCreation: z.ZodOptional<z.ZodObject<{
+            size: z.ZodObject<{
+                id: z.ZodNumber;
+            }, z.core.$loose>;
+            selectedFruits: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            selectedSauces: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            selectedCereales: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        }, z.core.$loose>>;
+    }, z.core.$strip>>>;
 }, z.core.$strip>;
 export declare const loginSchema: z.ZodObject<{
     telephone: z.ZodString;
@@ -15,6 +30,14 @@ export declare const loginSchema: z.ZodObject<{
         price: z.ZodNumber;
         quantity: z.ZodNumber;
         image: z.ZodOptional<z.ZodString>;
+        customCreation: z.ZodOptional<z.ZodObject<{
+            size: z.ZodObject<{
+                id: z.ZodNumber;
+            }, z.core.$loose>;
+            selectedFruits: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            selectedSauces: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            selectedCereales: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        }, z.core.$loose>>;
     }, z.core.$strip>>>;
 }, z.core.$strip>;
 export declare const updateProfileSchema: z.ZodObject<{
