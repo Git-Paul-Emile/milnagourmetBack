@@ -10,6 +10,7 @@ import { seedOrders } from './seeds/orders.seed.js';
 import { seedSiteContent } from './seeds/site-content.seed.js';
 import { seedConfigurations } from './seeds/configurations.seed.js';
 import { seedThemes } from './seeds/theme.seed.js';
+import { seedServices } from './seeds/services.seed.js';
 
 const prisma = new PrismaClient();
 
@@ -39,6 +40,8 @@ async function main() {
   await prisma.configurationStatut.deleteMany();
   await prisma.traductionCategorie.deleteMany();
   await prisma.categorieProduitItem.deleteMany();
+  await prisma.composantService.deleteMany();
+  await prisma.serviceSpecial.deleteMany();
   await prisma.produit.deleteMany();
   await prisma.tailleCreation.deleteMany();
   await prisma.traductionTaille.deleteMany();
@@ -62,6 +65,7 @@ async function main() {
   await seedSiteContent(prisma);
   await seedConfigurations(prisma);
   await seedThemes();
+  await seedServices(prisma);
 
   console.log('✅ Seeding terminé avec succès !');
 }
