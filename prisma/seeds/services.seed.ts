@@ -13,8 +13,7 @@ export async function seedServices(prisma: PrismaClient) {
     {
       code: 'panier',
       nom: 'Panier gourmand',
-      description:
-        "Panier garni à composer : formule basique (vin, pâté, fromage, confiture, amuse-gueule, jus de fruits, fruits) ou personnalisée selon vos envies. Le prix vous est communiqué par le vendeur après réception de la commande.",
+      description: 'Panier garni, composé ou à composer.',
       image: cloudinaryUrl('services/panier-gourmand.jpg'),
       minElements: 3,
       composants: ['Bouteille de vin', 'Pâté', 'Fromage', 'Confiture', 'Amuse-gueule', 'Jus de fruits', 'Fruits'],
@@ -22,11 +21,10 @@ export async function seedServices(prisma: PrismaClient) {
     {
       code: 'pancake',
       nom: 'Boîte pancake',
-      description:
-        "Boîte de pancakes maison (minimum 10 pièces). Service ponctuel selon disponibilité. Le prix vous est communiqué par le vendeur après réception de la commande.",
+      description: 'Boîte de pancakes maison (minimum 10 pièces).',
       image: cloudinaryUrl('services/boite-pancake.jpg'),
       minElements: 10,
-      composants: [] as string[],
+      composants: ['Pancake', 'Crêpes', 'Madeleine'],
     },
   ];
 

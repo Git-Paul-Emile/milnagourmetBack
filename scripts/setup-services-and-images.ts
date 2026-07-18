@@ -54,6 +54,8 @@ const PANIER_COMPOSANTS = [
   'Fruits',
 ];
 
+const PANCAKE_COMPOSANTS = ['Pancake', 'Crêpes', 'Madeleine'];
+
 async function uploadRootImage(file: string, folder: string, publicId: string): Promise<string | null> {
   const filePath = resolve(ROOT, file);
   if (!existsSync(filePath)) {
@@ -96,15 +98,13 @@ async function main() {
     {
       code: 'panier',
       nom: 'Panier gourmand',
-      description:
-        "Panier garni à composer : formule basique (vin, pâté, fromage, confiture, amuse-gueule, jus de fruits, fruits) ou personnalisée selon vos envies. Le prix vous est communiqué par le vendeur après réception de la commande.",
+      description: 'Panier garni, composé ou à composer.',
       minElements: 3,
     },
     {
       code: 'pancake',
       nom: 'Boîte pancake',
-      description:
-        "Boîte de pancakes maison (minimum 10 pièces). Service ponctuel selon disponibilité. Le prix vous est communiqué par le vendeur après réception de la commande.",
+      description: 'Boîte de pancakes maison (minimum 10 pièces).',
       minElements: 10,
     },
   ];
@@ -148,14 +148,13 @@ async function main() {
     });
     console.log(`   ✅ Service « ${def.nom} » prêt (actif, min ${service.minElements} éléments)`);
 
-    // Composants du panier (créés une seule fois)
-    if (def.code === 'panier') {
-      for (const nom of PANIER_COMPOSANTS) {
-        const exists = await prisma.composantService.findFirst({ where: { serviceId: service.id, nom } });
-        if (!exists) {
-          await prisma.composantService.create({ data: { serviceId: service.id, nom } });
-          console.log(`      ➕ Composant : ${nom}`);
-        }
+    // Composants du service (créés une seule fois)
+    const composants = def.code === 'panier' ? PANIER_COMPOSANTS : PANCAKE_COMPOSANTS;
+    for (const nom of composants) {
+      const exists = await prisma.composantService.findFirst({ where: { serviceId: service.id, nom } });
+      if (!exists) {
+        await prisma.composantService.create({ data: { serviceId: service.id, nom } });
+        console.log(`      ➕ Composant : ${nom}`);
       }
     }
   }

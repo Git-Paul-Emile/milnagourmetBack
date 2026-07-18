@@ -65,16 +65,16 @@ class DeliveryZoneRepository {
       SELECT
         z.id,
         z.nom,
-        z.fraisLivraison,
-        z.tempsEstime,
+        z."fraisLivraison",
+        z."tempsEstime",
         z.active,
-        z.creeLe,
-        COUNT(o.id) as orderCount,
-        COALESCE(SUM(o.montantTotal), 0) as totalRevenue
+        z."creeLe",
+        COUNT(o.id) as "orderCount",
+        COALESCE(SUM(o."montantTotal"), 0) as "totalRevenue"
       FROM delivery_zones z
-      LEFT JOIN users u ON z.id = u.zoneLivraisonId
-      LEFT JOIN orders o ON u.id = o.utilisateurId
-      GROUP BY z.id, z.nom, z.fraisLivraison, z.tempsEstime, z.active, z.creeLe
+      LEFT JOIN users u ON z.id = u."zoneLivraisonId"
+      LEFT JOIN orders o ON u.id = o."utilisateurId"
+      GROUP BY z.id, z.nom, z."fraisLivraison", z."tempsEstime", z.active, z."creeLe"
       ORDER BY z.nom ASC
     `;
 
