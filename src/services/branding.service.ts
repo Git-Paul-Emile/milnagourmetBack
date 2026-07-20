@@ -1,6 +1,5 @@
 import { prisma } from '../config/database.js';
 import cloudinary from '../config/cloudinary.js';
-import themeService from './theme.service.js';
 
 const DEFAULT_LOGO = cloudinary.url('milnagourmet/logos/milna-logo.png', { secure: true });
 

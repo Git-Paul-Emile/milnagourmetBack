@@ -81,7 +81,6 @@ model CreationPanier {
   @@map("cart_creations")
 }
 
-
 // ============================================
 // PRODUITS
 // ============================================
@@ -179,7 +178,6 @@ model TraductionCategorie {
   @@unique([categorieId, code])
   @@map("category_translations")
 }
-
 
 // ============================================
 // COMMANDES
@@ -391,7 +389,6 @@ model ZoneLivraison {
   @@map("delivery_zones")
 }
 
-
 model Livreur {
   id              Int      @id @default(autoincrement())
   nomComplet      String
@@ -404,7 +401,6 @@ model Livreur {
 
   @@map("delivery_persons")
 }
-
 
 model Temoinage {
   id          Int      @id @default(autoincrement())
@@ -541,19 +537,4 @@ model HistoriquePoints {
 
    @@map("loyalty_history")
 }
-
-model Theme {
-   id          Int      @id @default(autoincrement())
-   name        String   @unique
-   description String?
-   lightColors Json     // Objet avec toutes les variables CSS pour le mode clair
-   darkColors  Json?    // Objet avec toutes les variables CSS pour le mode sombre (optionnel)
-   isDefault   Boolean  @default(false)
-   isActive    Boolean  @default(false)
-   createdAt   DateTime @default(now())
-   updatedAt   DateTime @updatedAt
-
-   @@map("themes")
-}
-
 

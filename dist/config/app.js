@@ -14,9 +14,9 @@ import cartRoute from "../routes/cart.route.js";
 import configRoute from "../routes/config.route.js";
 import userRoute from "../routes/user.route.js";
 import uploadRoute from "../routes/upload.route.js";
-import themeRoute from "../routes/theme.route.js";
 import healthRoute from "../routes/health.route.js";
 import loyaltyRoute from "../routes/loyalty.route.js";
+import specialServiceRoute from "../routes/specialService.route.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from '../swagger.js';
 import { StatusCodes } from "http-status-codes";
@@ -59,9 +59,9 @@ app.use('/api/cart', cartRoute);
 app.use('/api/config', configRoute);
 app.use('/api/users', userRoute);
 app.use('/api/upload', uploadRoute);
-app.use('/api/themes', themeRoute);
 app.use('/api/health', healthRoute);
 app.use('/api/loyalty', loyaltyRoute);
+app.use('/api/services', specialServiceRoute);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Middleware pour routes non trouvées
 app.use((req, res) => {
