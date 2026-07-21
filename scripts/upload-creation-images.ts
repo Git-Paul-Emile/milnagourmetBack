@@ -56,10 +56,8 @@ const IMAGES: { file: string; folder: string }[] = [
   { file: 'crepe_cover.png', folder: 'service-covers' },      // Mono Saveur (rotation)
   { file: 'pank_cake_cover.png', folder: 'service-covers' },  // Mono Saveur (rotation)
   { file: 'madeleine_cover.png', folder: 'service-covers' },  // Mono Saveur (rotation)
-  { file: 'boite_mixte.png', folder: 'service-covers' },      // Boîte Découverte
-  // Couvertures des paniers (à déposer plus tard) :
-  // { file: 'panier-cadeau.png', folder: 'service-covers' },
-  // { file: 'panier-personnalise.png', folder: 'service-covers' },
+  { file: 'boite_mixte.png', folder: 'service-covers' },          // Boîte Découverte
+  { file: 'panier_cadeau_cover.png', folder: 'service-covers' },  // Panier Cadeau + Personnalisé
 ];
 
 async function main() {

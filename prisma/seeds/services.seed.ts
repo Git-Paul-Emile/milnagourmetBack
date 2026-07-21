@@ -55,6 +55,7 @@ export async function seedServices(prisma: PrismaClient) {
       typeService: 'PANIER_FIXE',
       prixBase: 25000,
       minElements: 1,
+      image: coverImg('panier_cadeau_cover.png'),
       composants: [
         { nom: 'Pâté', parDefaut: true },
         { nom: 'Fromage', parDefaut: true },
@@ -69,6 +70,7 @@ export async function seedServices(prisma: PrismaClient) {
       typeService: 'PANIER_PERSO',
       prixBase: 25000,
       minElements: 1,
+      image: coverImg('panier_cadeau_cover.png'),
       composants: [
         { nom: 'Pâté', parDefaut: true },
         { nom: 'Fromage', parDefaut: true },
