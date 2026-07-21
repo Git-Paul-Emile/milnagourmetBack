@@ -114,11 +114,19 @@ model Produit {
 
 model ServiceSpecial {
   id          Int      @id @default(autoincrement())
-  code        String   @unique // 'panier' | 'pancake'
+  code        String   @unique
   nom         String
   description String?
   image       String?
-  actif       Boolean  @default(true)  // Toggle admin (ex: pancake selon les humeurs)
+  actif       Boolean  @default(true)  // Toggle admin
+  // Comportement du service dans le modal de commande :
+  //   PANIER_FIXE  : éléments par défaut, non modifiables (Panier Cadeau)
+  //   PANIER_PERSO : défauts désélectionnables + ajouts libres (Panier Personnalisé)
+  //   MONO_SAVEUR  : un seul élément au choix, quantité min (Boîte Mono Saveur)
+  //   ASSORTIMENT  : quantité par élément, augmentable mais pas en dessous du défaut (Boîte Découverte)
+  typeService String   @default("PANIER_FIXE")
+  prixBase    Int      @default(0)     // "À partir de" en FCFA ; 0 = sur devis
+  covers      String[] @default([])    // Couvertures multiples : rotation automatique sur la carte
   minElements Int      @default(1)     // Minimum d'éléments, configurable dans le dashboard
   produitId   Int?                     // Produit caché lié pour les lignes de commande
   creeLe      DateTime @default(now())
@@ -132,12 +140,15 @@ model ServiceSpecial {
 
 // Composants sélectionnables d'un service (ex: vin, pâté, fromage… pour le panier)
 model ComposantService {
-  id         Int      @id @default(autoincrement())
-  serviceId  Int
-  nom        String
-  disponible Boolean  @default(true)
-  creeLe     DateTime @default(now())
-  modifieLe  DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  serviceId      Int
+  nom            String
+  image          String?  // Vignette de l'élément (gérée par l'admin)
+  disponible     Boolean  @default(true)
+  parDefaut      Boolean  @default(false) // Présent d'office dans les paniers
+  quantiteDefaut Int      @default(0)     // Quantité de départ (ASSORTIMENT) — plancher côté client
+  creeLe         DateTime @default(now())
+  modifieLe      DateTime @updatedAt
 
   service ServiceSpecial @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
@@ -344,6 +355,7 @@ model TailleCreation {
   id               Int     @id @default(autoincrement())
   nom              String  @unique
   prix             Int
+  image            String?
   maxFruits        Int
   maxSauces        Int
   cerealesAutorise Boolean @default(false)

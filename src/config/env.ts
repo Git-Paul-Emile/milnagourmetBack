@@ -29,12 +29,15 @@ const envSchema = z.object({
   FRONT_URL: z.string().url().default('http://localhost:5173'),
   CORS_ORIGINS: z.string().optional().default(''),
   
-  // 360dialog / WhatsApp
-  D360_API_KEY: z.string().optional(),
-  D360_BASE_URL: z.string().default('https://waba-v2.360dialog.io'),
-  D360_TEMPLATE_NAME: z.string().optional(),
-  D360_TEMPLATE_LANG: z.string().default('fr'),
-  VENDOR_WHATSAPP_NUMBER: z.string().optional(),
+  // Telnyx / WhatsApp (envoi des notifications de commande)
+  // Toutes optionnelles : sans elles, les notifications sont ignorées en
+  // silence, le reste de l'application fonctionne normalement.
+  TELNYX_API_KEY: z.string().optional(),
+  TELNYX_BASE_URL: z.string().default('https://api.telnyx.com/v2'),
+  TELNYX_WHATSAPP_FROM: z.string().optional(), // numéro WhatsApp Business expéditeur
+  TELNYX_MESSAGING_PROFILE_ID: z.string().optional(),
+  TELNYX_MESSAGE_TYPE: z.string().optional(), // laisser vide en général
+  VENDOR_WHATSAPP_NUMBER: z.string().optional(), // destinataire vendeur
 });
 
 // Valider et exporter

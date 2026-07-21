@@ -10,9 +10,12 @@ function toFrontend(service: {
   description: string | null;
   image: string | null;
   actif: boolean;
+  typeService: string;
+  prixBase: number;
+  covers: string[];
   minElements: number;
   produit: { id: number; nom: string; prix: number; categorie: string; disponible: boolean } | null;
-  composants: { id: number; nom: string; disponible: boolean }[];
+  composants: { id: number; nom: string; image: string | null; disponible: boolean; parDefaut: boolean; quantiteDefaut: number }[];
 }) {
   return {
     id: service.id,
@@ -21,8 +24,11 @@ function toFrontend(service: {
     description: service.description,
     image: service.image,
     active: service.actif,
+    serviceType: service.typeService,
+    basePrice: service.prixBase,
+    covers: service.covers ?? [],
     minElements: service.minElements,
-    // Produit caché lié : nécessaire côté front pour créer la ligne de commande (prix 0 = sur devis)
+    // Produit caché lié : nécessaire côté front pour créer la ligne de commande
     linkedProduct: service.produit
       ? {
           id: service.produit.id,
@@ -35,7 +41,10 @@ function toFrontend(service: {
     components: service.composants.map((c) => ({
       id: c.id,
       name: c.nom,
+      image: c.image,
       available: c.disponible,
+      isDefault: c.parDefaut,
+      defaultQuantity: c.quantiteDefaut,
     })),
   };
 }
@@ -53,7 +62,15 @@ class SpecialServiceService {
 
   async update(
     id: number,
-    data: { nom?: string; description?: string; image?: string; actif?: boolean; minElements?: number }
+    data: {
+      nom?: string;
+      description?: string;
+      image?: string;
+      actif?: boolean;
+      minElements?: number;
+      prixBase?: number;
+      typeService?: string;
+    }
   ) {
     const existing = await specialServiceRepository.findById(id);
     if (!existing) {
@@ -61,6 +78,13 @@ class SpecialServiceService {
     }
     if (data.minElements !== undefined && (!Number.isInteger(data.minElements) || data.minElements < 1)) {
       throw new AppError("minElements doit être un entier supérieur ou égal à 1", StatusCodes.BAD_REQUEST);
+    }
+    if (data.prixBase !== undefined && (!Number.isInteger(data.prixBase) || data.prixBase < 0)) {
+      throw new AppError('prixBase doit être un entier positif ou nul', StatusCodes.BAD_REQUEST);
+    }
+    const TYPES = ['PANIER_FIXE', 'PANIER_PERSO', 'MONO_SAVEUR', 'ASSORTIMENT'];
+    if (data.typeService !== undefined && !TYPES.includes(data.typeService)) {
+      throw new AppError(`typeService doit être l'un de : ${TYPES.join(', ')}`, StatusCodes.BAD_REQUEST);
     }
     const updated = await specialServiceRepository.update(id, data);
     return toFrontend(updated);
@@ -77,9 +101,15 @@ class SpecialServiceService {
     return await specialServiceRepository.createComposant(serviceId, nom.trim());
   }
 
-  async updateComposant(id: number, data: { nom?: string; disponible?: boolean }) {
+  async updateComposant(
+    id: number,
+    data: { nom?: string; image?: string; disponible?: boolean; parDefaut?: boolean; quantiteDefaut?: number }
+  ) {
     if (data.nom !== undefined && !data.nom.trim()) {
       throw new AppError('Le nom du composant ne peut pas être vide', StatusCodes.BAD_REQUEST);
+    }
+    if (data.quantiteDefaut !== undefined && (!Number.isInteger(data.quantiteDefaut) || data.quantiteDefaut < 0)) {
+      throw new AppError('quantiteDefaut doit être un entier positif ou nul', StatusCodes.BAD_REQUEST);
     }
     return await specialServiceRepository.updateComposant(id, {
       ...data,

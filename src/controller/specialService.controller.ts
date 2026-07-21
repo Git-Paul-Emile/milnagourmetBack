@@ -40,13 +40,15 @@ class SpecialServiceController {
   async update(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseInt(req.params.id ?? '', 10);
-      const { nom, description, image, actif, minElements } = req.body;
+      const { nom, description, image, actif, minElements, prixBase, typeService } = req.body;
       const service = await specialServiceService.update(id, {
         ...(nom !== undefined ? { nom } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(image !== undefined ? { image } : {}),
         ...(actif !== undefined ? { actif: Boolean(actif) } : {}),
         ...(minElements !== undefined ? { minElements: parseInt(minElements, 10) } : {}),
+        ...(prixBase !== undefined ? { prixBase: parseInt(prixBase, 10) } : {}),
+        ...(typeService !== undefined ? { typeService } : {}),
       });
       res.status(StatusCodes.OK).json(
         jsonResponse({
@@ -81,10 +83,13 @@ class SpecialServiceController {
   async updateComposant(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseInt(req.params.componentId ?? '', 10);
-      const { nom, disponible } = req.body;
+      const { nom, image, disponible, parDefaut, quantiteDefaut } = req.body;
       const composant = await specialServiceService.updateComposant(id, {
         ...(nom !== undefined ? { nom } : {}),
+        ...(image !== undefined ? { image } : {}),
         ...(disponible !== undefined ? { disponible: Boolean(disponible) } : {}),
+        ...(parDefaut !== undefined ? { parDefaut: Boolean(parDefaut) } : {}),
+        ...(quantiteDefaut !== undefined ? { quantiteDefaut: parseInt(quantiteDefaut, 10) } : {}),
       });
       res.status(StatusCodes.OK).json(
         jsonResponse({

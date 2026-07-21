@@ -1,7 +1,10 @@
 import { env } from '../config/env.js';
 import type { CommandeWithRelations } from '../repository/order.repository.js';
 
-const D360_BASE_URL = env.D360_BASE_URL;
+// Envoi des notifications WhatsApp via Telnyx (remplace l'ancien fournisseur).
+// L'API publique de ce service (sendOrderNotification, sendCustomerStatusNotification)
+// est inchangée : seuls le transport et les variables d'environnement changent.
+const TELNYX_BASE_URL = env.TELNYX_BASE_URL;
 
 export class WhatsAppService {
   static async sendOrderNotification(order: CommandeWithRelations): Promise<void> {
@@ -11,8 +14,8 @@ export class WhatsAppService {
         console.warn('Numéro WhatsApp du vendeur non configuré');
         return;
       }
-      if (!env.D360_API_KEY) {
-        console.warn('Clé API 360dialog non configurée, notification WhatsApp ignorée');
+      if (!WhatsAppService.isConfigured()) {
+        console.warn('Telnyx non configuré (clé API ou expéditeur manquant), notification vendeur ignorée');
         return;
       }
 
@@ -35,8 +38,8 @@ export class WhatsAppService {
         console.warn('Numéro de téléphone du client introuvable, notification ignorée');
         return;
       }
-      if (!env.D360_API_KEY) {
-        console.warn('Clé API 360dialog non configurée, notification client ignorée');
+      if (!WhatsAppService.isConfigured()) {
+        console.warn('Telnyx non configuré (clé API ou expéditeur manquant), notification client ignorée');
         return;
       }
 
@@ -53,46 +56,55 @@ export class WhatsAppService {
     }
   }
 
-  // Envoie un message WhatsApp via l'API 360dialog (compatible WhatsApp Cloud API).
-  // Note : en dehors d'une fenêtre de conversation de 24h, WhatsApp exige un template
-  // pré-approuvé plutôt qu'un message texte libre. Si D360_TEMPLATE_NAME est défini,
-  // ce template est utilisé ; sinon un message texte libre est envoyé.
-  private static async sendMessage(to: string, body: string): Promise<void> {
-    const payload = env.D360_TEMPLATE_NAME
-      ? {
-          messaging_product: 'whatsapp',
-          to,
-          type: 'template',
-          template: {
-            name: env.D360_TEMPLATE_NAME,
-            language: { code: env.D360_TEMPLATE_LANG },
-            components: [
-              {
-                type: 'body',
-                parameters: [{ type: 'text', text: body }]
-              }
-            ]
-          }
-        }
-      : {
-          messaging_product: 'whatsapp',
-          to,
-          type: 'text',
-          text: { body }
-        };
+  // Le service est-il prêt à émettre ? Il faut au minimum la clé API Telnyx
+  // et un expéditeur WhatsApp. Sans cela, les notifications sont ignorées en
+  // silence (le compte peut n'être rechargé/configuré que plus tard).
+  private static isConfigured(): boolean {
+    return Boolean(env.TELNYX_API_KEY && env.TELNYX_WHATSAPP_FROM);
+  }
 
-    const response = await fetch(`${D360_BASE_URL}/messages`, {
+  /**
+   * Envoie un message WhatsApp via l'API Telnyx (endpoint /v2/messages).
+   *
+   * Telnyx route un message vers le canal WhatsApp lorsque l'expéditeur
+   * (`from`) est un numéro WhatsApp Business activé sur le compte. Le
+   * `messaging_profile_id` est facultatif mais recommandé côté Telnyx.
+   *
+   * Important — fenêtre des 24 h : hors d'une conversation ouverte depuis
+   * moins de 24 h, WhatsApp impose un « template » pré-approuvé plutôt qu'un
+   * texte libre. Ces templates se configurent dans le portail Telnyx ; tant
+   * qu'aucun n'est fourni ici, on envoie un texte libre, qui ne passe que
+   * dans la fenêtre de 24 h. À compléter une fois les templates approuvés.
+   */
+  private static async sendMessage(to: string, body: string): Promise<void> {
+    const payload: Record<string, unknown> = {
+      from: env.TELNYX_WHATSAPP_FROM,
+      to,
+      text: body,
+    };
+
+    // Facultatif : rattache l'envoi à un Messaging Profile Telnyx précis.
+    if (env.TELNYX_MESSAGING_PROFILE_ID) {
+      payload.messaging_profile_id = env.TELNYX_MESSAGING_PROFILE_ID;
+    }
+    // Facultatif : force le type de message (ex. "MMS"). Laisser vide pour le
+    // routage par défaut du profil de messagerie.
+    if (env.TELNYX_MESSAGE_TYPE) {
+      payload.type = env.TELNYX_MESSAGE_TYPE;
+    }
+
+    const response = await fetch(`${TELNYX_BASE_URL}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'D360-API-KEY': env.D360_API_KEY!
+        Authorization: `Bearer ${env.TELNYX_API_KEY!}`,
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`Échec de l'appel API 360dialog (${response.status}): ${errorBody}`);
+      throw new Error(`Échec de l'appel API Telnyx (${response.status}): ${errorBody}`);
     }
   }
 

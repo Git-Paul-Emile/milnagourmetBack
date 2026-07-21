@@ -24,8 +24,19 @@ export function sanitizeFileBaseName(originalName: string): string {
     .replace(/^-|-$/g, '');
 }
 
+// Cache-buster fixé au démarrage du process : un run de seed produit donc des
+// URLs stables entre elles, mais un NOUVEAU run (après changement d'image)
+// génère de NOUVELLES URLs. Cela contourne définitivement le cache CDN/navigateur,
+// contrairement à l'invalidation Cloudinary qui est lente et peu fiable.
+const CACHE_BUST = Date.now();
+
 export function cloudinaryUrl(relativePublicId: string): string {
-  return cloudinary.url(`${CLOUDINARY_ROOT_FOLDER}/${relativePublicId}`, { secure: true });
+  const base = cloudinary.url(`${CLOUDINARY_ROOT_FOLDER}/${relativePublicId}`, {
+    secure: true,
+    analytics: false,    // retire le paramètre ?_a=… (variante de cache parasite)
+    force_version: false, // retire le /v1/ figé de l'URL
+  });
+  return `${base}?v=${CACHE_BUST}`;
 }
 
 export function uploadBufferToCloudinary(
@@ -40,6 +51,9 @@ export function uploadBufferToCloudinary(
         public_id: publicId,
         resource_type: 'image',
         overwrite: true,
+        // Purge le cache du CDN quand on réécrit sur un public_id existant.
+        // Sans cela, l'URL (identique) continue de servir l'ancienne image.
+        invalidate: true,
       },
       (error, result) => {
         if (error || !result) {

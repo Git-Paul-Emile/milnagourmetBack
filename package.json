@@ -17,6 +17,9 @@
     "seed": "tsx prisma/seed.ts",
     "migrate:cloudinary": "tsx scripts/migrate-uploads-to-cloudinary.ts"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

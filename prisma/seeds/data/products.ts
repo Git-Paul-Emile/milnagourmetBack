@@ -1,7 +1,7 @@
 import { cloudinaryUrl } from '../../../src/config/cloudinary.js';
 
 const YOGURT_NATURE_IMAGE = cloudinaryUrl('produits/yogurt-nature.jpg');
-const YOGURT_LIQUID_IMAGE = cloudinaryUrl('produits/yogurt-liquid.jpg');
+const YOGURT_COCO_IMAGE = cloudinaryUrl('produits/liquide-coco.png');
 
 export const productsData = [
   {
@@ -39,7 +39,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2000,
     "description": "Yaourt liquide onctueux parfumé à la vanille naturelle. Une explosion de saveurs douces et crémeuses.",
-    "image": YOGURT_LIQUID_IMAGE,
+    "image": YOGURT_COCO_IMAGE,
     "available": true
   },
   {
@@ -48,7 +48,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2500,
     "description": "Yaourt liquide au bissap (hibiscus), une fusion unique entre tradition sénégalaise et gourmandise moderne.",
-    "image": YOGURT_LIQUID_IMAGE,
+    "image": YOGURT_COCO_IMAGE,
     "available": true,
     "archived": false
   },
@@ -58,7 +58,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2500,
     "description": "Yaourt liquide inspiré des saveurs traditionnelles du couscous, pour une expérience gustative authentique.",
-    "image": YOGURT_LIQUID_IMAGE,
+    "image": YOGURT_COCO_IMAGE,
     "available": true
   },
   {
@@ -67,7 +67,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2500,
     "description": "Yaourt liquide à la noix de coco fraîche, transportez-vous sous les tropiques à chaque gorgée.",
-    "image": YOGURT_LIQUID_IMAGE,
+    "image": YOGURT_COCO_IMAGE,
     "available": true
   },
   {

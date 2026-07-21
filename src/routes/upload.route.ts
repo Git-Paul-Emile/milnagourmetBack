@@ -32,6 +32,12 @@ router.post('/cereale-image', requireAdmin, uploadController.uploadCerealeImage)
 // Upload d'une image d'avatar pour les toasts (ADMIN)
 router.post('/avatar-toast-image', requireAdmin, uploadController.uploadAvatarToastImage);
 
+// Upload d'une image d'élément de service / composant (ADMIN)
+router.post('/service-component-image', requireAdmin, uploadController.uploadServiceComponentImage);
+
+// Upload d'une image de couverture de carte service (ADMIN)
+router.post('/service-cover-image', requireAdmin, uploadController.uploadServiceCoverImage);
+
 // Lister les images disponibles (ADMIN)
 router.get('/images', requireAdmin, uploadController.listImages);
 

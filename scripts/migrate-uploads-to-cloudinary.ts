@@ -22,6 +22,7 @@ async function uploadFile(folder: string, filePath: string, publicIdWithoutExt: 
     public_id: publicIdWithoutExt,
     resource_type: 'image',
     overwrite: true,
+    invalidate: true,
   });
   return result.secure_url;
 }

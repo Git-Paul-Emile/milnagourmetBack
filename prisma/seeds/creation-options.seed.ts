@@ -8,10 +8,11 @@ export async function seedCreationOptions(prisma: PrismaClient) {
   for (const size of creationSizesData) {
     const createdTaille = await prisma.tailleCreation.upsert({
       where: { nom: size.name },
-      update: {},
+      update: { image: size.image },
       create: {
         nom: size.name,
         prix: size.price,
+        image: size.image,
         maxFruits: size.fruits,
         maxSauces: size.sauces,
         cerealesAutorise: size.cereales
@@ -24,17 +25,18 @@ export async function seedCreationOptions(prisma: PrismaClient) {
   console.log('🍓 Création des fruits...');
   const fruitIdMap: { [key: string]: number } = {};
   for (let i = 0; i < creationOptionsData.fruits.length; i++) {
-    const fruitName = creationOptionsData.fruits[i];
-    if (fruitName) {
+    const fruit = creationOptionsData.fruits[i];
+    if (fruit) {
       const createdFruit = await prisma.fruit.upsert({
-        where: { nom: fruitName },
-        update: {},
+        where: { nom: fruit.nom },
+        update: { image: fruit.image },
         create: {
-          nom: fruitName,
+          nom: fruit.nom,
+          image: fruit.image,
           ordreAffichage: i
         }
       });
-      fruitIdMap[fruitName] = createdFruit.id;
+      fruitIdMap[fruit.nom] = createdFruit.id;
     }
   }
 
@@ -42,17 +44,18 @@ export async function seedCreationOptions(prisma: PrismaClient) {
   console.log('🍯 Création des sauces...');
   const sauceIdMap: { [key: string]: number } = {};
   for (let i = 0; i < creationOptionsData.sauces.length; i++) {
-    const sauceName = creationOptionsData.sauces[i];
-    if (sauceName) {
+    const sauce = creationOptionsData.sauces[i];
+    if (sauce) {
       const createdSauce = await prisma.sauce.upsert({
-        where: { nom: sauceName },
-        update: {},
+        where: { nom: sauce.nom },
+        update: { image: sauce.image },
         create: {
-          nom: sauceName,
+          nom: sauce.nom,
+          image: sauce.image,
           ordreAffichage: i
         }
       });
-      sauceIdMap[sauceName] = createdSauce.id;
+      sauceIdMap[sauce.nom] = createdSauce.id;
     }
   }
 
@@ -60,17 +63,18 @@ export async function seedCreationOptions(prisma: PrismaClient) {
   console.log('🌾 Création des céréales...');
   const cerealeIdMap: { [key: string]: number } = {};
   for (let i = 0; i < creationOptionsData.cereales.length; i++) {
-    const cerealeName = creationOptionsData.cereales[i];
-    if (cerealeName) {
+    const cereale = creationOptionsData.cereales[i];
+    if (cereale) {
       const createdCereale = await prisma.cereale.upsert({
-        where: { nom: cerealeName },
-        update: {},
+        where: { nom: cereale.nom },
+        update: { image: cereale.image },
         create: {
-          nom: cerealeName,
+          nom: cereale.nom,
+          image: cereale.image,
           ordreAffichage: i
         }
       });
-      cerealeIdMap[cerealeName] = createdCereale.id;
+      cerealeIdMap[cereale.nom] = createdCereale.id;
     }
   }
 

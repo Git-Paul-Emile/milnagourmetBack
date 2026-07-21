@@ -1,7 +1,7 @@
 import { cloudinaryUrl } from '../../../src/config/cloudinary.js';
 
 const DEFAULT_BANNER = cloudinaryUrl('banners/hero-banner.jpg');
-const DEFAULT_CREATION_IMAGE = cloudinaryUrl('creation/yogurt-creation.jpg');
+const DEFAULT_CREATION_IMAGE = cloudinaryUrl('creation/image-creation-panier.png');
 const DEFAULT_LOGO = cloudinaryUrl('logos/milna-logo.png');
 const DEFAULT_AVATAR_TOAST = cloudinaryUrl('avatarToast/milna-owner.jpg');
 

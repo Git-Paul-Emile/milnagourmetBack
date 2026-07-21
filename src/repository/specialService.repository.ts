@@ -35,7 +35,15 @@ class SpecialServiceRepository {
 
   async update(
     id: number,
-    data: { nom?: string; description?: string; image?: string; actif?: boolean; minElements?: number }
+    data: {
+      nom?: string;
+      description?: string;
+      image?: string;
+      actif?: boolean;
+      minElements?: number;
+      prixBase?: number;
+      typeService?: string;
+    }
   ) {
     return await prisma.serviceSpecial.update({
       where: { id },
@@ -49,7 +57,10 @@ class SpecialServiceRepository {
     return await prisma.composantService.create({ data: { serviceId, nom } });
   }
 
-  async updateComposant(id: number, data: { nom?: string; disponible?: boolean }) {
+  async updateComposant(
+    id: number,
+    data: { nom?: string; image?: string; disponible?: boolean; parDefaut?: boolean; quantiteDefaut?: number }
+  ) {
     return await prisma.composantService.update({ where: { id }, data });
   }
 

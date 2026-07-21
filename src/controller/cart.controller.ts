@@ -6,7 +6,7 @@ import cloudinary from '../config/cloudinary.js';
 
 //TODO: refaire le service cartservice avec les bonnes pratiques
 
-const DEFAULT_CREATION_IMAGE = cloudinary.url('milnagourmet/creation/yogurt-creation.jpg', { secure: true });
+const DEFAULT_CREATION_IMAGE = cloudinary.url('milnagourmet/creation/image-creation-panier.png', { secure: true });
 
 
 class CartController {

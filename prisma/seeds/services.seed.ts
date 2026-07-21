@@ -1,30 +1,114 @@
 import { PrismaClient } from '@prisma/client';
 import { cloudinaryUrl } from '../../src/config/cloudinary.js';
 
+// Vignette d'un élément de service : fichier déposé à la racine du projet,
+// téléversé sur Cloudinary sous le dossier "service-components".
+const componentImg = (basename: string) => cloudinaryUrl(`service-components/${basename}`);
+
+// Image de couverture d'une carte service (dossier "service-covers").
+const coverImg = (basename: string) => cloudinaryUrl(`service-covers/${basename}`);
+
+// Nom d'élément -> image (mêmes noms pour les paniers et les boîtes).
+const COMPONENT_IMAGES: Record<string, string> = {
+  'Pâté': componentImg('pate.png'),
+  'Fromage': componentImg('fromage.png'),
+  'Jus de fruits': componentImg('jus_fruit.png'),
+  'Fruits': componentImg('fruit.png'),
+  'Madeleine': componentImg('madeleine.png'),
+  'Pancake': componentImg('pancake.png'),
+  'Crêpe': componentImg('crepe.png'),
+};
+
 /**
- * Seed des services spéciaux (Panier gourmand, Boîte pancake).
- * Prix sur devis : le vendeur communique le prix après réception de la commande.
- * Chaque service est adossé à un produit caché (prix 0) pour les lignes de commande.
+ * Seed des services spéciaux — 4 services, chacun avec sa logique :
+ *
+ * 1. Panier Cadeau (PANIER_FIXE)      : éléments par défaut non modifiables.
+ * 2. Panier Personnalisé (PANIER_PERSO): mêmes défauts, désélectionnables,
+ *    plus des éléments libres saisis par le client.
+ * 3. Boîte Mono Saveur (MONO_SAVEUR)  : UNE gourmandise au choix, min 10 pièces.
+ * 4. Boîte Découverte (ASSORTIMENT)   : quantité par gourmandise, augmentable
+ *    mais jamais en dessous du défaut (crêpe 4, autres 3).
+ *
+ * Prix : paniers à partir de 25 000 FCFA (ajusté ensuite par le vendeur) ;
+ * boîtes sur devis. Chaque service est adossé à un produit caché pour les
+ * lignes de commande.
  */
 export async function seedServices(prisma: PrismaClient) {
   console.log('🎁 Création des services spéciaux...');
 
-  const defs = [
+  type ComposantDef = { nom: string; parDefaut?: boolean; quantiteDefaut?: number };
+  const defs: {
+    code: string;
+    nom: string;
+    description: string;
+    typeService: string;
+    prixBase: number;
+    minElements: number;
+    image?: string;
+    covers?: string[];
+    composants: ComposantDef[];
+  }[] = [
     {
-      code: 'panier',
-      nom: 'Panier gourmand',
-      description: 'Panier garni, composé ou à composer.',
-      image: cloudinaryUrl('services/panier-gourmand.jpg'),
-      minElements: 3,
-      composants: ['Bouteille de vin', 'Pâté', 'Fromage', 'Confiture', 'Amuse-gueule', 'Jus de fruits', 'Fruits'],
+      code: 'panier-cadeau',
+      nom: 'Panier Cadeau',
+      description: 'Des paniers prêts à offrir.',
+      typeService: 'PANIER_FIXE',
+      prixBase: 25000,
+      minElements: 1,
+      composants: [
+        { nom: 'Pâté', parDefaut: true },
+        { nom: 'Fromage', parDefaut: true },
+        { nom: 'Jus de fruits', parDefaut: true },
+        { nom: 'Fruits', parDefaut: true },
+      ],
     },
     {
-      code: 'pancake',
-      nom: 'Boîte pancake',
-      description: 'Boîte de pancakes maison (minimum 10 pièces).',
-      image: cloudinaryUrl('services/boite-pancake.jpg'),
-      minElements: 10,
-      composants: ['Pancake', 'Crêpes', 'Madeleine'],
+      code: 'panier-personnalise',
+      nom: 'Panier Personnalisé',
+      description: 'Créez votre panier selon vos envies.',
+      typeService: 'PANIER_PERSO',
+      prixBase: 25000,
+      minElements: 1,
+      composants: [
+        { nom: 'Pâté', parDefaut: true },
+        { nom: 'Fromage', parDefaut: true },
+        { nom: 'Jus de fruits', parDefaut: true },
+        { nom: 'Fruits', parDefaut: true },
+      ],
+    },
+    {
+      code: 'boite-mono-saveur',
+      nom: 'Boîte Mono Saveur',
+      description: 'Une seule gourmandise dans la boîte.',
+      typeService: 'MONO_SAVEUR',
+      prixBase: 0, // sur devis
+      minElements: 10, // quantité minimum de la gourmandise choisie
+      // Rotation automatique sur la carte : crêpe, pancake, madeleine.
+      image: coverImg('crepe_cover.png'),
+      covers: [
+        coverImg('crepe_cover.png'),
+        coverImg('pank_cake_cover.png'),
+        coverImg('madeleine_cover.png'),
+      ],
+      composants: [
+        { nom: 'Madeleine' },
+        { nom: 'Pancake' },
+        { nom: 'Crêpe' },
+      ],
+    },
+    {
+      code: 'boite-decouverte',
+      nom: 'Boîte Découverte',
+      description: 'Un assortiment de plusieurs gourmandises.',
+      typeService: 'ASSORTIMENT',
+      prixBase: 0, // sur devis
+      minElements: 1,
+      image: coverImg('boite_mixte.png'),
+      composants: [
+        { nom: 'Crêpe', quantiteDefaut: 4 },
+        { nom: 'Madeleine', quantiteDefaut: 3 },
+        { nom: 'Pancake', quantiteDefaut: 3 },
+      ],
     },
   ];
 
@@ -34,9 +118,9 @@ export async function seedServices(prisma: PrismaClient) {
         nom: def.nom,
         categorie: 'CREATION',
         categorieId: null,
-        prix: 0, // sur devis
+        prix: def.prixBase, // 0 = sur devis ; sinon prix de départ
         description: def.description,
-        image: def.image,
+        image: def.image ?? null,
         disponible: true,
       },
     });
@@ -46,17 +130,28 @@ export async function seedServices(prisma: PrismaClient) {
         code: def.code,
         nom: def.nom,
         description: def.description,
-        image: def.image,
+        image: def.image ?? null,
+        covers: def.covers ?? [],
         actif: true,
+        typeService: def.typeService,
+        prixBase: def.prixBase,
         minElements: def.minElements,
         produitId: produit.id,
       },
     });
 
-    for (const nom of def.composants) {
-      await prisma.composantService.create({ data: { serviceId: service.id, nom } });
+    for (const c of def.composants) {
+      await prisma.composantService.create({
+        data: {
+          serviceId: service.id,
+          nom: c.nom,
+          image: COMPONENT_IMAGES[c.nom] ?? null,
+          parDefaut: c.parDefaut ?? false,
+          quantiteDefaut: c.quantiteDefaut ?? 0,
+        },
+      });
     }
   }
 
-  console.log('✅ Services spéciaux créés');
+  console.log('✅ Services spéciaux créés (4 services)');
 }
