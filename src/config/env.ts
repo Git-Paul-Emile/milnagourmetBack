@@ -50,7 +50,12 @@ const envSchema = z.object({
   // Expéditeur : doit appartenir à un domaine vérifié dans Resend.
   MAIL_FROM: z.string().default('Milna Gourmet <contact@milnagourmet.com>'),
   // Boîte du vendeur qui reçoit les nouvelles commandes.
-  VENDOR_EMAIL: z.string().email().optional(),
+  // Chaîne vide traitée comme absente : certains hébergeurs (Render)
+  // conservent une variable "" plutôt que de la supprimer.
+  VENDOR_EMAIL: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().email().optional()
+  ),
 
   // ------------------------------------------------------------------
   // Notifications — canal WHATSAPP (Telnyx)
@@ -84,11 +89,17 @@ export const env = parsedEnv.data;
  * canal de notification configuré, une commande peut être enregistrée sans
  * que personne ne soit jamais prévenu.
  *
+ * Le canal de notification (email/WhatsApp) est en avertissement non-bloquant
+ * le temps que le compte Resend soit créé — seul CORS_ORIGINS vide bloque
+ * encore le démarrage, car c'est une faille de sécurité et non une
+ * fonctionnalité manquante.
+ *
  * Appelée au démarrage (src/index.ts), jamais pendant les tests.
  */
 export function assertProductionConfig(): void {
   if (env.NODE_ENV !== 'production') return;
 
+  const avertissements: string[] = [];
   const erreurs: string[] = [];
 
   const emailPret = Boolean(env.RESEND_API_KEY && env.VENDOR_EMAIL);
@@ -97,7 +108,7 @@ export function assertProductionConfig(): void {
   );
 
   if (!emailPret && !whatsappPret) {
-    erreurs.push(
+    avertissements.push(
       "Aucun canal de notification configuré. Renseignez RESEND_API_KEY + VENDOR_EMAIL " +
       "(canal email) ou TELNYX_API_KEY + TELNYX_WHATSAPP_FROM + VENDOR_WHATSAPP_NUMBER (canal WhatsApp)."
     );
@@ -106,13 +117,18 @@ export function assertProductionConfig(): void {
   // La réinitialisation de mot de passe passe obligatoirement par email :
   // sans Resend, la fonctionnalité serait inopérante.
   if (!env.RESEND_API_KEY) {
-    erreurs.push(
+    avertissements.push(
       "RESEND_API_KEY manquante : la réinitialisation de mot de passe ne pourra pas fonctionner."
     );
   }
 
   if (env.CORS_ORIGINS.trim() === '') {
     erreurs.push("CORS_ORIGINS vide : aucune origine de production autorisée.");
+  }
+
+  if (avertissements.length > 0) {
+    console.warn('⚠️  Configuration de production incomplète :');
+    avertissements.forEach((a) => console.warn(`   - ${a}`));
   }
 
   if (erreurs.length > 0) {
