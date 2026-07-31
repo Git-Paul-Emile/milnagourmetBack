@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js"
 import type { Livreur, Commande } from "@prisma/client"
+import { logger } from '../config/logger.js';
 
 class DeliveryPersonRepository {
 
@@ -22,7 +23,7 @@ class DeliveryPersonRepository {
             });
             return deliveryPersons as (Livreur & { commandes: { id: number; statut: string; montantTotal: number; creeLe: Date }[] })[];
         } catch (error) {
-            console.error('Erreur lors de la récupération des livreurs:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des livreurs:');
             throw new Error('Impossible de récupérer les livreurs');
         }
     }
@@ -37,7 +38,7 @@ class DeliveryPersonRepository {
             });
             return deliveryPerson;
         } catch (error) {
-            console.error('Erreur lors de la récupération du livreur:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération du livreur:');
             throw new Error('Impossible de récupérer le livreur');
         }
     }
@@ -57,7 +58,7 @@ class DeliveryPersonRepository {
             });
             return deliveryPerson;
         } catch (error) {
-            console.error('Erreur lors de la création du livreur:', error);
+            logger.error({ err: error }, 'Erreur lors de la création du livreur:');
             throw new Error('Impossible de créer le livreur');
         }
     }
@@ -70,7 +71,7 @@ class DeliveryPersonRepository {
             });
             return deliveryPerson;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour du livreur:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour du livreur:');
             throw new Error('Impossible de mettre à jour le livreur');
         }
     }
@@ -81,7 +82,7 @@ class DeliveryPersonRepository {
                 where: { id: parseInt(id) }
             });
         } catch (error) {
-            console.error('Erreur lors de la suppression du livreur:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression du livreur:');
             throw new Error('Impossible de supprimer le livreur');
         }
     }

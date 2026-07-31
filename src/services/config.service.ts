@@ -1,6 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { logger } from '../config/logger.js';
+import { prisma } from '../config/database.js';
 
-const prisma = new PrismaClient();
+// Client Prisma partagé : instancier un second client ouvrirait un
+// pool de connexions supplémentaire, épuisant le quota PostgreSQL.
 
 class ConfigService {
   // Récupérer toutes les configurations de statuts
@@ -10,7 +12,7 @@ class ConfigService {
         orderBy: { ordre: 'asc' }
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des configurations de statuts:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération des configurations de statuts:');
       // Retourner des valeurs par défaut si la table n'existe pas ou est vide
       return [
         { id: 1, statut: 'RECU', libelleFr: 'Reçue', couleurBg: 'bg-blue-100', couleurText: 'text-blue-800', icone: 'CheckCircle', ordre: 1, creeLe: new Date(), modifieLe: new Date() },
@@ -29,7 +31,7 @@ class ConfigService {
         }
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des traductions de catégories:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération des traductions de catégories:');
       // Retourner des valeurs par défaut
       return [
         { id: 1, categorieId: 1, code: 'cremeux', libelleFr: 'Crémeux', creeLe: new Date(), modifieLe: new Date(), categorie: { id: 1, nom: 'Crémeux', description: null, active: true, creeLe: new Date(), modifieLe: new Date() } },
@@ -48,7 +50,7 @@ class ConfigService {
         }
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des traductions de tailles:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération des traductions de tailles:');
       // Retourner des valeurs par défaut
       return [
         { id: 1, tailleId: 1, code: 'moyen', libelleFr: 'Moyen', creeLe: new Date(), modifieLe: new Date(), taille: { id: 1, nom: 'Moyen', prix: 5000, maxFruits: 3, maxSauces: 2, cerealesAutorise: false, active: true, ordreAffichage: 1, creeLe: new Date(), modifieLe: new Date() } },
@@ -72,7 +74,7 @@ class ConfigService {
         sizeTranslations
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération de toutes les configurations:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération de toutes les configurations:');
       // Retourner des valeurs par défaut complètes
       return {
         orderStatuses: await this.getOrderStatusConfig(),

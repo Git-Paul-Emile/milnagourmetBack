@@ -16,6 +16,10 @@ datasource db {
 model Utilisateur {
    id             Int              @id @default(autoincrement())
    telephone      String           @unique
+   // Facultatif : l'authentification se fait par téléphone. L'email n'est
+   // utilisé que pour les notifications et la réinitialisation de mot de
+   // passe. Nullable pour ne pas rompre les comptes existants.
+   email          String?          @unique
    nomComplet     String
    blocked        Boolean          @default(false)
    password       String
@@ -30,8 +34,29 @@ model Utilisateur {
    paniers       Panier[]
    zoneLivraison ZoneLivraison?    @relation(fields: [zoneLivraisonId], references: [id])
    historiquePoints HistoriquePoints[]
+   jetonsReinitialisation JetonReinitialisation[]
 
    @@map("users")
+}
+
+/// Jeton à usage unique pour la réinitialisation de mot de passe.
+///
+/// Seul le HASH du jeton est stocké : si la base fuite, les jetons en cours
+/// restent inexploitables (même principe qu'un mot de passe). Le jeton en
+/// clair n'existe que dans le lien envoyé par email.
+model JetonReinitialisation {
+   id            Int       @id @default(autoincrement())
+   utilisateurId Int
+   tokenHash     String    @unique
+   expireLe      DateTime
+   utiliseLe     DateTime?
+   creeLe        DateTime  @default(now())
+
+   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+   @@index([utilisateurId])
+   @@index([expireLe])
+   @@map("password_reset_tokens")
 }
 
 // ============================================
@@ -204,8 +229,21 @@ model Commande {
     montantTotal    Int
     fraisLivraison  Int            @default(0)
     notes           String?
+    // Email de contact saisi à la commande (peut différer de celui du compte,
+    // et permet de notifier un client non connecté).
+    emailClient     String?
     creeLe          DateTime       @default(now())
     modifieLe       DateTime       @updatedAt
+
+    // --- Traçabilité de la notification vendeur ---
+    // Sans ces champs, un échec d'envoi est invisible : la commande existe
+    // mais personne n'est prévenu. Ils permettent d'afficher un badge
+    // « non notifiée » dans le dashboard et de proposer un renvoi.
+    notificationEnvoyee    Boolean   @default(false)
+    notificationCanal      String?   // "whatsapp" | "email"
+    notificationTentatives Int       @default(0)
+    notificationErreur     String?
+    notificationEnvoyeeLe  DateTime?
 
    utilisateur             Utilisateur?            @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
    elements                ElementCommande[]

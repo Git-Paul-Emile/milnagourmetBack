@@ -1,6 +1,7 @@
 import { prisma } from "../config/database.js"
 import type { Produit, Prisma, CategorieProduit } from "@prisma/client"
 import type { ProductCreate, ProductUpdate } from "../validator/product.schema.js"
+import { logger } from '../config/logger.js';
 
 export interface ProductListOptions {
   page?: number;
@@ -29,7 +30,7 @@ class ProductRepository {
             });
             return product;
         } catch (error) {
-            console.error('Erreur lors de la création du produit:', error);
+            logger.error({ err: error }, 'Erreur lors de la création du produit:');
             throw new Error('Impossible de créer le produit');
         }
     }
@@ -74,7 +75,7 @@ class ProductRepository {
 
             return { items: products, total };
         } catch (error) {
-            console.error('Erreur lors de la récupération des produits:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des produits:');
             throw new Error('Impossible de récupérer les produits');
         }
     }
@@ -89,7 +90,7 @@ class ProductRepository {
             });
             return product;
         } catch (error) {
-            console.error('Erreur lors de la récupération du produit:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération du produit:');
             throw new Error('Impossible de récupérer le produit');
         }
     }
@@ -105,7 +106,7 @@ class ProductRepository {
             });
             return product;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour du produit:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour du produit:');
             throw new Error('Impossible de mettre à jour le produit');
         }
     }
@@ -120,7 +121,7 @@ class ProductRepository {
             });
             return product;
         } catch (error) {
-            console.error('Erreur lors de la suppression du produit:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression du produit:');
             throw new Error('Impossible de supprimer le produit');
         }
     }

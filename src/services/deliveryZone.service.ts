@@ -1,6 +1,7 @@
 import deliveryZoneRepository from '../repository/deliveryZone.repository.js';
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
+import { logger } from '../config/logger.js';
 
 class DeliveryZoneService {
   async getAllDeliveryZones() {
@@ -16,7 +17,7 @@ class DeliveryZoneService {
         active: zone.active
       }));
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des zones de livraison:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des zones de livraison:');
       throw error;
     }
   }
@@ -34,7 +35,7 @@ class DeliveryZoneService {
         active: zone.active
       }));
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des zones de livraison actives:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des zones de livraison actives:');
       throw error;
     }
   }
@@ -54,7 +55,7 @@ class DeliveryZoneService {
         totalRevenue: Number(zone.totalRevenue)
       }));
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des zones de livraison avec comptages:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des zones de livraison avec comptages:');
       throw error;
     }
   }
@@ -75,7 +76,7 @@ class DeliveryZoneService {
         active: zone.active
       };
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération de la zone de livraison:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération de la zone de livraison:');
       throw error;
     }
   }
@@ -102,7 +103,7 @@ class DeliveryZoneService {
         active: zone.active
       };
     } catch (error) {
-      console.error('Erreur dans le service lors de la création de la zone de livraison:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la création de la zone de livraison:');
       throw error;
     }
   }
@@ -129,7 +130,7 @@ class DeliveryZoneService {
         active: zone.active
       };
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour de la zone de livraison:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour de la zone de livraison:');
       throw error;
     }
   }
@@ -139,7 +140,7 @@ class DeliveryZoneService {
       await deliveryZoneRepository.delete(id);
       return { success: true };
     } catch (error) {
-      console.error('Erreur dans le service lors de la suppression de la zone de livraison:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la suppression de la zone de livraison:');
       throw error;
     }
   }

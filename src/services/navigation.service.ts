@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { AppError } from '../utils/AppError.js';
+import { logger } from '../config/logger.js';
 
 
 
@@ -16,7 +17,7 @@ class NavigationService {
         href: item.href
       }));
     } catch (error) {
-      console.error('Erreur lors de la récupération de la navigation:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération de la navigation:');
       throw error;
     }
   }

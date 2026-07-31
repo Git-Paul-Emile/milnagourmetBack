@@ -2,6 +2,8 @@ import { cloudinaryUrl } from '../../../src/config/cloudinary.js';
 
 const YOGURT_NATURE_IMAGE = cloudinaryUrl('produits/yogurt-nature.jpg');
 const YOGURT_COCO_IMAGE = cloudinaryUrl('produits/liquide-coco.png');
+const YOGURT_VANILLE_IMAGE = cloudinaryUrl('produits/liquide-vanille.png');
+const YOGURT_BISSAP_IMAGE = cloudinaryUrl('produits/liquide-bissap.png');
 
 export const productsData = [
   {
@@ -39,7 +41,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2000,
     "description": "Yaourt liquide onctueux parfumé à la vanille naturelle. Une explosion de saveurs douces et crémeuses.",
-    "image": YOGURT_COCO_IMAGE,
+    "image": YOGURT_VANILLE_IMAGE,
     "available": true
   },
   {
@@ -48,7 +50,7 @@ export const productsData = [
     "category": "liquide",
     "price": 2500,
     "description": "Yaourt liquide au bissap (hibiscus), une fusion unique entre tradition sénégalaise et gourmandise moderne.",
-    "image": YOGURT_COCO_IMAGE,
+    "image": YOGURT_BISSAP_IMAGE,
     "available": true,
     "archived": false
   },

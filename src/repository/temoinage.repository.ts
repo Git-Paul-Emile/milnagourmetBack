@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js"
 import type { Temoinage } from "@prisma/client"
+import { logger } from '../config/logger.js';
 
 class TemoinageRepository {
 
@@ -12,7 +13,7 @@ class TemoinageRepository {
             });
             return testimonials;
         } catch (error) {
-            console.error('Erreur lors de la récupération des témoignages:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des témoignages:');
             throw new Error('Impossible de récupérer les témoignages');
         }
     }
@@ -24,7 +25,7 @@ class TemoinageRepository {
             });
             return testimonials;
         } catch (error) {
-            console.error('Erreur lors de la récupération de tous les témoignages:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de tous les témoignages:');
             throw new Error('Impossible de récupérer tous les témoignages');
         }
     }
@@ -36,7 +37,7 @@ class TemoinageRepository {
             });
             return testimonial;
         } catch (error) {
-            console.error('Erreur lors de la création du témoignage:', error);
+            logger.error({ err: error }, 'Erreur lors de la création du témoignage:');
             throw new Error('Impossible de créer le témoignage');
         }
     }
@@ -49,7 +50,7 @@ class TemoinageRepository {
             });
             return testimonial;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour du témoignage:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour du témoignage:');
             throw new Error('Impossible de mettre à jour le témoignage');
         }
     }
@@ -60,7 +61,7 @@ class TemoinageRepository {
                 where: { id }
             });
         } catch (error) {
-            console.error('Erreur lors de la suppression du témoignage:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression du témoignage:');
             throw new Error('Impossible de supprimer le témoignage');
         }
     }

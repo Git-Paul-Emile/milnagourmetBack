@@ -1,7 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import type { Panier, ElementPanier, Produit, CreationPanier } from '@prisma/client';
+import type { PrismaClient, Panier, ElementPanier, Produit, CreationPanier } from '@prisma/client';
+import { logger } from '../config/logger.js';
+import { prisma } from '../config/database.js';
 
-const prisma = new PrismaClient();
+// Client Prisma partagé : instancier un second client ouvrirait un
+// pool de connexions supplémentaire, épuisant le quota PostgreSQL.
 
 export interface ElementPanierWithProduit extends ElementPanier {
   produit?: Produit | null;
@@ -240,7 +242,7 @@ class CartRepository {
        });
 
        if (!taille || !taille.active) {
-         console.warn(`Taille de création invalide dans le panier guest, ignorée: ${guestItem.name}`);
+         logger.warn(`Taille de création invalide dans le panier guest, ignorée: ${guestItem.name}`);
          continue;
        }
 
@@ -265,7 +267,7 @@ class CartRepository {
      });
 
      if (!produit) {
-       console.warn(`Produit non trouvé ou indisponible dans le panier guest: ${guestItem.name}`);
+       logger.warn(`Produit non trouvé ou indisponible dans le panier guest: ${guestItem.name}`);
        continue;
      }
 

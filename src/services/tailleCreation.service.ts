@@ -5,6 +5,7 @@ import { TailleCreationCreateSchema, TailleCreationUpdateSchema } from '../valid
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
+import { logger } from '../config/logger.js';
 
 class TailleCreationService {
   private tailleCreationRepository = tailleCreationRepository;
@@ -25,10 +26,10 @@ class TailleCreationService {
       }
 
       const taille = await tailleCreationRepository.create(validatedData);
-      console.log(`Taille créée avec succès: ${taille.nom}`);
+      logger.info(`Taille créée avec succès: ${taille.nom}`);
       return taille;
     } catch (error) {
-      console.error('Erreur dans le service lors de la création de la taille:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la création de la taille:');
       if (error instanceof ZodError) {
         throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
       }
@@ -39,10 +40,10 @@ class TailleCreationService {
   async findAll(): Promise<TailleCreation[]> {
     try {
       const tailles = await tailleCreationRepository.findAll();
-      console.log(`${tailles.length} tailles récupérées`);
+      logger.info(`${tailles.length} tailles récupérées`);
       return tailles;
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des tailles:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des tailles:');
       throw error;
     }
   }
@@ -51,13 +52,13 @@ class TailleCreationService {
     try {
       const taille = await tailleCreationRepository.findById(id);
       if (!taille) {
-        console.log(`Taille avec l'ID ${id} non trouvée`);
+        logger.info(`Taille avec l'ID ${id} non trouvée`);
         return null;
       }
-      console.log(`Taille trouvée: ${taille.nom}`);
+      logger.info(`Taille trouvée: ${taille.nom}`);
       return taille;
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération de la taille:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération de la taille:');
       throw error;
     }
   }
@@ -86,10 +87,10 @@ class TailleCreationService {
       }
 
       const taille = await tailleCreationRepository.update(id, validatedData);
-      console.log(`Taille mise à jour avec succès: ${taille.nom}`);
+      logger.info(`Taille mise à jour avec succès: ${taille.nom}`);
       return taille;
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour de la taille:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour de la taille:');
       if (error instanceof ZodError) {
         throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
       }
@@ -106,10 +107,10 @@ class TailleCreationService {
       }
 
       const taille = await tailleCreationRepository.delete(id);
-      console.log(`Taille supprimée avec succès: ${taille.nom}`);
+      logger.info(`Taille supprimée avec succès: ${taille.nom}`);
       return taille;
     } catch (error) {
-      console.error('Erreur dans le service lors de la suppression de la taille:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la suppression de la taille:');
       throw error;
     }
   }

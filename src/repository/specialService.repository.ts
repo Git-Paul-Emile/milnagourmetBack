@@ -1,6 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/database.js';
 
-const prisma = new PrismaClient();
+// Client Prisma partagé : instancier un second client ouvrirait un
+// pool de connexions supplémentaire, épuisant le quota PostgreSQL.
 
 class SpecialServiceRepository {
   // Tous les services, avec composants et produit lié (admin)

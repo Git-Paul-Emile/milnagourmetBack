@@ -8,6 +8,7 @@ import { setAuthCookie, clearAuthCookie } from '../utils/cookie.utils.js';
 import type { RegisterInput, LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
 import { updateProfileSchema } from '../validator/auth.schema.js';
 import type { Utilisateur } from '@prisma/client';
+import { logger } from '../config/logger.js';
 
 // Helper function to adapt user data for frontend with zone name
 async function adaptUserForFrontend(user: Utilisateur) {
@@ -17,7 +18,7 @@ async function adaptUserForFrontend(user: Utilisateur) {
       const zone = await deliveryZoneService.getDeliveryZoneById(user.zoneLivraisonId);
       zoneLivraison = zone.name;
     } catch (error) {
-      console.warn(`Could not fetch delivery zone for user ${user.id}:`, error);
+      logger.warn({ err: error }, `Could not fetch delivery zone for user ${user.id}:`);
       zoneLivraison = null;
     }
   }
@@ -26,6 +27,7 @@ async function adaptUserForFrontend(user: Utilisateur) {
     id: user.id,
     nomComplet: user.nomComplet,
     telephone: user.telephone,
+    email: user.email,
     zoneLivraisonId: user.zoneLivraisonId?.toString() || null,
     zoneLivraison,
     role: user.role || 'USER',
@@ -95,19 +97,19 @@ class AuthController {
   // Rafraîchir le token d'accès
   async refresh(req: Request, res: Response, next: NextFunction) {
     try {
-      console.log('[PROD DEBUG] Refresh attempt, refreshToken present:', !!req.cookies.refreshToken);
+      logger.info({ donnees: !!req.cookies.refreshToken }, '[PROD DEBUG] Refresh attempt, refreshToken present:');
       const { refreshToken } = req.cookies;
 
       // Débogage: afficher si cookie de refresh présent et certaines métadonnées (masquer le token complet)
       if (process.env.NODE_ENV !== 'production') {
-        console.log('[AuthController.refresh] Requête de rafraîchissement reçue');
-        console.log('[AuthController.refresh] Cookies:', req.cookies);
-        console.log('[AuthController.refresh] refreshToken présent:', !!refreshToken);
+        logger.info('[AuthController.refresh] Requête de rafraîchissement reçue');
+        logger.info({ donnees: req.cookies }, '[AuthController.refresh] Cookies:');
+        logger.info({ donnees: !!refreshToken }, '[AuthController.refresh] refreshToken présent:');
         if (refreshToken) {
           const masked = String(refreshToken).length > 12 ? `${String(refreshToken).slice(0,6)}...${String(refreshToken).slice(-6)}` : String(refreshToken);
-          console.log('[AuthController.refresh] refreshToken (masqué):', masked);
+          logger.info({ donnees: masked }, '[AuthController.refresh] refreshToken (masqué):');
         }
-        console.log('[AuthController.refresh] Origin:', req.headers.origin || 'n/a', 'IP:', req.ip || 'n/a');
+        logger.info({ donnees1: req.headers.origin || 'n/a', donnees2: 'IP:', donnees3: req.ip || 'n/a' }, '[AuthController.refresh] Origin:');
       }
 
       if (!refreshToken) {
@@ -144,7 +146,7 @@ class AuthController {
         })
       );
     } catch (error) {
-      console.log('[PROD DEBUG] Refresh error:', (error as Error).message);
+      logger.info({ err: (error as Error).message }, '[PROD DEBUG] Refresh error:');
       next(error);
     }
   }

@@ -5,6 +5,7 @@ import { SauceCreateSchema, SauceUpdateSchema } from '../validator/creation.sche
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
+import { logger } from '../config/logger.js';
 
 class SauceService {
   private sauceRepository = sauceRepository;
@@ -25,10 +26,10 @@ class SauceService {
       }
 
       const sauce = await sauceRepository.create(validatedData);
-      console.log(`Sauce créée avec succès: ${sauce.nom}`);
+      logger.info(`Sauce créée avec succès: ${sauce.nom}`);
       return sauce;
     } catch (error) {
-      console.error('Erreur dans le service lors de la création de la sauce:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la création de la sauce:');
       if (error instanceof ZodError) {
         throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
       }
@@ -39,10 +40,10 @@ class SauceService {
   async findAll(): Promise<Sauce[]> {
     try {
       const sauces = await sauceRepository.findAll();
-      console.log(`${sauces.length} sauces récupérées`);
+      logger.info(`${sauces.length} sauces récupérées`);
       return sauces;
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des sauces:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des sauces:');
       throw error;
     }
   }
@@ -51,13 +52,13 @@ class SauceService {
     try {
       const sauce = await sauceRepository.findById(id);
       if (!sauce) {
-        console.log(`Sauce avec l'ID ${id} non trouvée`);
+        logger.info(`Sauce avec l'ID ${id} non trouvée`);
         return null;
       }
-      console.log(`Sauce trouvée: ${sauce.nom}`);
+      logger.info(`Sauce trouvée: ${sauce.nom}`);
       return sauce;
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération de la sauce:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération de la sauce:');
       throw error;
     }
   }
@@ -86,10 +87,10 @@ class SauceService {
       }
 
       const sauce = await sauceRepository.update(id, validatedData);
-      console.log(`Sauce mise à jour avec succès: ${sauce.nom}`);
+      logger.info(`Sauce mise à jour avec succès: ${sauce.nom}`);
       return sauce;
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour de la sauce:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour de la sauce:');
       if (error instanceof ZodError) {
         throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
       }
@@ -106,10 +107,10 @@ class SauceService {
       }
 
       const sauce = await sauceRepository.delete(id);
-      console.log(`Sauce supprimée avec succès: ${sauce.nom}`);
+      logger.info(`Sauce supprimée avec succès: ${sauce.nom}`);
       return sauce;
     } catch (error) {
-      console.error('Erreur dans le service lors de la suppression de la sauce:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la suppression de la sauce:');
       throw error;
     }
   }

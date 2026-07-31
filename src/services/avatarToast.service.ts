@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { AppError } from '../utils/AppError.js';
+import { logger } from '../config/logger.js';
 
 class AvatarToastService {
   async getAvatarToast() {
@@ -12,7 +13,7 @@ class AvatarToastService {
         image: avatarToast.image
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'avatar toast:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération de l\'avatar toast:');
       throw error;
     }
   }
@@ -36,7 +37,7 @@ class AvatarToastService {
         return { image: newAvatarToast.image };
       }
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'avatar toast:', error);
+      logger.error({ err: error }, 'Erreur lors de la mise à jour de l\'avatar toast:');
       throw error;
     }
   }

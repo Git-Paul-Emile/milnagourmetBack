@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import cloudinary from '../config/cloudinary.js';
+import { logger } from '../config/logger.js';
 
 const DEFAULT_LOGO = cloudinary.url('milnagourmet/logos/milna-logo.png', { secure: true });
 
@@ -19,7 +20,7 @@ class BrandingService {
         logo
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération du branding:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération du branding:');
       throw error;
     }
   }
@@ -43,7 +44,7 @@ class BrandingService {
         return { logo: newBranding.logo };
       }
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du branding:', error);
+      logger.error({ err: error }, 'Erreur lors de la mise à jour du branding:');
       throw error;
     }
   }

@@ -3,10 +3,11 @@ import multer from 'multer';
 import path from 'path';
 import { jsonResponse } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
-import { PrismaClient } from '@prisma/client';
 import cloudinary, { CLOUDINARY_ROOT_FOLDER, sanitizeFileBaseName, uploadBufferToCloudinary } from '../config/cloudinary.js';
+import { prisma } from '../config/database.js';
 
-const prisma = new PrismaClient();
+// Client Prisma partagé : instancier un second client ouvrirait un
+// pool de connexions supplémentaire, épuisant le quota PostgreSQL.
 
 // Dossiers Cloudinary (équivalents des anciens dossiers locaux uploads/*)
 const FOLDERS = {

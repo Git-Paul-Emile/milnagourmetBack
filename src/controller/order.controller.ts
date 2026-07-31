@@ -6,7 +6,8 @@ import orderRepository from '../repository/order.repository.js';
 import { jsonResponse, AppError, buildPaginationMeta } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
 import type { CommandeWithRelations } from '../repository/order.repository.js';
-import { WhatsAppService } from '../services/whatsapp.service.js';
+import { NotificationService } from '../services/notification/notification.service.js';
+import { logger } from '../config/logger.js';
 import { LoyaltyService } from '../services/loyalty.service.js';
 import deliveryZoneService from '../services/deliveryZone.service.js';
 import { orderQuerySchema } from '../validator/query.schema.js';
@@ -120,7 +121,7 @@ async function adaptOrderToFrontend(order: CommandeWithRelations) {
         };
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération de la zone de livraison:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération de la zone de livraison:');
     }
   }
 
@@ -156,7 +157,18 @@ class OrderController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const orderData: FrontendOrderData = req.body;
-      const utilisateurId = orderData.customer ? parseInt(orderData.customer.id) : undefined;
+      /**
+       * Identifiant du compte rattaché à la commande, s'il y en a un.
+       *
+       * Une commande invité transmet quand même un bloc `customer` (nom,
+       * téléphone, email de suivi) mais sans identifiant. `parseInt('')`
+       * renvoie `NaN` : si on le laissait passer, Prisma recevrait `NaN`
+       * comme clé étrangère et l'insertion échouerait. On ne conserve
+       * donc la valeur que si c'est un entier positif.
+       */
+      const identifiantBrut = orderData.customer?.id ? parseInt(orderData.customer.id, 10) : NaN;
+      const utilisateurId =
+        Number.isInteger(identifiantBrut) && identifiantBrut > 0 ? identifiantBrut : undefined;
 
       // Séparer les produits et les créations personnalisées
       const products = orderData.items.filter(item => item.product && !item.id.startsWith('creation'));
@@ -242,6 +254,9 @@ class OrderController {
         utilisateurId,
         nomClient: orderData.customer?.name || 'Client anonyme',
         telephoneClient: orderData.customer?.phone || 'Non spécifié',
+        // Conservé sur la commande : permet de notifier le client par email
+        // même s'il n'a pas de compte, et sans dépendre du profil.
+        emailClient: orderData.customer?.email?.trim() || null,
         statut: 'RECU' as const,
         montantTotal: Math.max(0, montantAvantRemise - remise),
         fraisLivraison,
@@ -253,9 +268,18 @@ class OrderController {
       const order = await orderRepository.create(dbOrderData);
       const fullOrder = await orderRepository.findById(order.id);
 
-      // Envoi asynchrone de la notification WhatsApp au vendeur (n'échoue jamais la commande)
+      // Notification du vendeur, volontairement asynchrone : une panne du
+      // fournisseur ne doit jamais faire échouer une vente. Le résultat est
+      // tracé sur la commande (notificationEnvoyee / notificationErreur),
+      // ce qui permet au dashboard de signaler et de renvoyer les échecs.
       if (fullOrder) {
-        WhatsAppService.sendOrderNotification(fullOrder).catch((error: unknown) => console.error('Erreur WhatsApp ignorée :', error));
+        void NotificationService.notifierVendeurNouvelleCommande(fullOrder).catch(
+          (error: unknown) =>
+            logger.error(
+              { commandeId: order.id, erreur: error instanceof Error ? error.message : String(error) },
+              'Notification vendeur en échec'
+            )
+        );
       }
 
       // Vider le panier et solder les points de fidélité de l'utilisateur connecté
@@ -271,7 +295,7 @@ class OrderController {
           // Points gagnés sur le montant avant remise fidélité, pour éviter un effet cumulatif
           await LoyaltyService.addPoints(utilisateurId, order.id, montantAvantRemise);
         } catch (error) {
-          console.error('[ORDER CREATION] Erreur lors de l\'ajout des points de fidélité:', error);
+          logger.error({ err: error }, '[ORDER CREATION] Erreur lors de l\'ajout des points de fidélité:');
         }
       }
 
@@ -427,10 +451,14 @@ class OrderController {
 
       const order = await orderRepository.updateStatus(id, newStatus);
 
-      // Notification WhatsApp asynchrone au client (n'échoue jamais la mise à jour)
+      // Notification client asynchrone (n'échoue jamais la mise à jour)
       if (newStatus === 'LIVREE' || newStatus === 'ANNULEE') {
-        WhatsAppService.sendCustomerStatusNotification(order, newStatus).catch((error: unknown) =>
-          console.error('Erreur notification client ignorée :', error)
+        void NotificationService.notifierClientStatutCommande(order, newStatus).catch(
+          (error: unknown) =>
+            logger.error(
+              { commandeId: order.id, erreur: error instanceof Error ? error.message : String(error) },
+              'Notification client en échec'
+            )
         );
       }
 

@@ -1,5 +1,6 @@
 import temoinageRepository from '../repository/temoinage.repository.js';
 import type { Temoinage } from '@prisma/client';
+import { logger } from '../config/logger.js';
 
 export interface TemoignageDTO {
   id: number;
@@ -33,7 +34,7 @@ class TemoinageService {
         active: includeInactive ? testimonial.active : undefined
       }));
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des témoignages:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des témoignages:');
       throw error;
     }
   }
@@ -59,7 +60,7 @@ class TemoinageService {
 
       return testimonial;
     } catch (error) {
-      console.error('Erreur dans le service lors de la création du témoignage:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la création du témoignage:');
       throw error;
     }
   }
@@ -85,7 +86,7 @@ class TemoinageService {
       const testimonial = await this.temoinageRepository.update(id, updateData);
       return testimonial;
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour du témoignage:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour du témoignage:');
       throw error;
     }
   }
@@ -94,7 +95,7 @@ class TemoinageService {
     try {
       await this.temoinageRepository.delete(id);
     } catch (error) {
-      console.error('Erreur dans le service lors de la suppression du témoignage:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la suppression du témoignage:');
       throw error;
     }
   }

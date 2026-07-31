@@ -14,10 +14,30 @@ const guestCartSchema = z.array(z.object({
   }).passthrough().optional()
 })).optional();
 
+/**
+ * Adresse email facultative.
+ *
+ * L'authentification se fait par téléphone : l'email ne sert qu'aux
+ * notifications et à la réinitialisation de mot de passe. Il reste donc
+ * optionnel pour ne bloquer personne à l'inscription.
+ *
+ * La chaîne vide est convertie en `undefined` : un champ de formulaire
+ * laissé vide envoie `""`, qui échouerait à la validation `.email()` et
+ * violerait par ailleurs la contrainte d'unicité en base.
+ */
+const emailOptionnelSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email("Format d'adresse email invalide")
+  .optional()
+  .or(z.literal('').transform(() => undefined));
+
 export const registerSchema = z.object({
   telephone: z.string()
     .min(1, 'Le téléphone est requis')
     .regex(/^[+]?[\d\s-()]+$/, 'Format de téléphone invalide'),
+  email: emailOptionnelSchema,
   nomComplet: z.string()
     .min(2, 'Le nom complet doit contenir au moins 2 caractères')
     .max(100, 'Le nom complet ne peut pas dépasser 100 caractères'),
@@ -52,6 +72,7 @@ export const updateProfileSchema = z.object({
   telephone: z.string()
     .regex(/^[+]?[\d\s-()]+$/, 'Format de téléphone invalide')
     .optional(),
+  email: emailOptionnelSchema,
   deliveryZoneId: z.string()
     .transform((val) => parseInt(val))
     .refine((val) => !isNaN(val) && val > 0, 'ID de zone de livraison invalide')

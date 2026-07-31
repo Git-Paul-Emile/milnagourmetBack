@@ -1,6 +1,7 @@
 import { prisma } from "../config/database.js"
 import type { Sauce } from "@prisma/client"
 import type { SauceCreate, SauceUpdate } from "../validator/creation.schema.js"
+import { logger } from '../config/logger.js';
 
 
 class SauceRepository {
@@ -10,7 +11,7 @@ class SauceRepository {
             const sauce = await prisma.sauce.create({ data });
             return sauce;
         } catch (error) {
-            console.error('Erreur lors de la création de la sauce:', error);
+            logger.error({ err: error }, 'Erreur lors de la création de la sauce:');
             throw new Error('Impossible de créer la sauce');
         }
     }
@@ -23,7 +24,7 @@ class SauceRepository {
             });
             return sauces;
         } catch (error) {
-            console.error('Erreur lors de la récupération des sauces:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des sauces:');
             throw new Error('Impossible de récupérer les sauces');
         }
     }
@@ -35,7 +36,7 @@ class SauceRepository {
             });
             return sauce;
         } catch (error) {
-            console.error('Erreur lors de la récupération de la sauce:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de la sauce:');
             throw new Error('Impossible de récupérer la sauce');
         }
     }
@@ -48,7 +49,7 @@ class SauceRepository {
             });
             return sauce;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour de la sauce:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour de la sauce:');
             throw new Error('Impossible de mettre à jour la sauce');
         }
     }
@@ -60,7 +61,7 @@ class SauceRepository {
             });
             return sauce;
         } catch (error) {
-            console.error('Erreur lors de la suppression de la sauce:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression de la sauce:');
             throw new Error('Impossible de supprimer la sauce');
         }
     }

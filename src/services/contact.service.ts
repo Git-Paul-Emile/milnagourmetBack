@@ -1,5 +1,6 @@
 import contactRepository from '../repository/contact.repository.js';
 import type { Contact, HoraireOuverture, ReseauSocial } from '@prisma/client';
+import { logger } from '../config/logger.js';
 
 // Format des horaires d'ouverture tel qu'échangé avec le frontend (clé = jour en anglais)
 export interface StoreHoursDTO {
@@ -55,7 +56,7 @@ class ContactService {
         hours
       };
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des informations de contact:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des informations de contact:');
       throw error;
     }
   }
@@ -73,7 +74,7 @@ class ContactService {
 
       return result;
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des réseaux sociaux:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des réseaux sociaux:');
       throw error;
     }
   }
@@ -140,7 +141,7 @@ class ContactService {
         storeHours
       };
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des données de contact:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des données de contact:');
       throw error;
     }
   }
@@ -205,7 +206,7 @@ class ContactService {
 
       return contact;
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour des informations de contact:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour des informations de contact:');
       throw error;
     }
   }
@@ -215,7 +216,7 @@ class ContactService {
       const result = await this.contactRepository.updateSocialMedia(socialMedia);
       return result;
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour des réseaux sociaux:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour des réseaux sociaux:');
       throw error;
     }
   }

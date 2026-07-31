@@ -1,9 +1,10 @@
 import cartRepository from '../repository/cart.repository.js';
 import type { CartWithItems, CreateCartItemData, UpdateCartItemData } from '../repository/cart.repository.js';
 import { prisma } from '../config/database.js';
-import { WhatsAppService } from './whatsapp.service.js';
+import { NotificationService } from './notification/notification.service.js';
 import { LoyaltyService } from './loyalty.service.js';
 import orderRepository from '../repository/order.repository.js';
+import { logger } from '../config/logger.js';
 
 class CartService {
   private cartRepository = cartRepository;
@@ -13,7 +14,7 @@ class CartService {
     try {
       return await this.cartRepository.findByUserId(utilisateurId);
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération du panier:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération du panier:');
       throw error;
     }
   }
@@ -71,7 +72,7 @@ class CartService {
         });
       }
     } catch (error) {
-      console.error('Erreur dans le service lors de l\'ajout au panier:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de l\'ajout au panier:');
       throw error;
     }
   }
@@ -96,7 +97,7 @@ class CartService {
         await this.cartRepository.updateItem(item.id, { quantite });
       }
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour du panier:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour du panier:');
       throw error;
     }
   }
@@ -116,7 +117,7 @@ class CartService {
 
       await this.cartRepository.removeItem(item.id);
     } catch (error) {
-      console.error('Erreur dans le service lors de la suppression du panier:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la suppression du panier:');
       throw error;
     }
   }
@@ -129,7 +130,7 @@ class CartService {
         await this.cartRepository.clearCart(cart.id);
       }
     } catch (error) {
-      console.error('Erreur dans le service lors du vidage du panier:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors du vidage du panier:');
       throw error;
     }
   }
@@ -139,7 +140,7 @@ class CartService {
     try {
       await this.cartRepository.mergeGuestCart(utilisateurId, guestItems);
     } catch (error) {
-      console.error('Erreur dans le service lors de la fusion du panier guest:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la fusion du panier guest:');
       throw error;
     }
   }
@@ -170,7 +171,7 @@ class CartService {
         ...creationData
       });
     } catch (error) {
-      console.error('Erreur dans le service lors de l\'ajout d\'une création personnalisée:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de l\'ajout d\'une création personnalisée:');
       throw error;
     }
   }
@@ -186,7 +187,7 @@ class CartService {
     try {
       await this.cartRepository.updateCreation(creationId, updateData);
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour d\'une création personnalisée:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour d\'une création personnalisée:');
       throw error;
     }
   }
@@ -196,7 +197,7 @@ class CartService {
     try {
       await this.cartRepository.removeCreation(creationId);
     } catch (error) {
-      console.error('Erreur dans le service lors de la suppression d\'une création personnalisée:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la suppression d\'une création personnalisée:');
       throw error;
     }
   }
@@ -302,13 +303,16 @@ class CartService {
         await LoyaltyService.updatePointsHistoryWithOrderId(utilisateurId, commande.id, pointsToUse);
       }
 
-      // Récupérer la commande complète avec relations pour la notification WhatsApp
+      // Récupérer la commande complète avec relations pour la notification
       const fullOrder = await orderRepository.findById(commande.id);
 
-      // Envoi asynchrone de la notification WhatsApp au vendeur
+      // Notification du vendeur, asynchrone : une panne du fournisseur ne
+      // doit jamais faire échouer la commande. Le canal (WhatsApp ou email)
+      // est choisi par la couche notification selon ce qui est configuré.
       if (fullOrder) {
-        WhatsAppService.sendOrderNotification(fullOrder).catch((error: unknown) =>
-          console.error('Erreur WhatsApp ignorée :', error)
+        void NotificationService.notifierVendeurNouvelleCommande(fullOrder).catch(
+          (error: unknown) =>
+            logger.error({ err: error, commandeId: commande.id }, 'Notification vendeur en échec')
         );
       }
 
@@ -321,7 +325,7 @@ class CartService {
         discountAmount
       };
     } catch (error) {
-      console.error('Erreur lors du checkout:', error);
+      logger.error({ err: error }, 'Erreur lors du checkout:');
       throw error;
     }
   }

@@ -5,6 +5,7 @@ import { FruitCreateSchema, FruitUpdateSchema } from '../validator/creation.sche
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
+import { logger } from '../config/logger.js';
 
 class FruitService {
   private fruitRepository = fruitRepository;
@@ -25,10 +26,10 @@ class FruitService {
       }
 
       const fruit = await fruitRepository.create(validatedData);
-      console.log(`Fruit créé avec succès: ${fruit.nom}`);
+      logger.info(`Fruit créé avec succès: ${fruit.nom}`);
       return fruit;
     } catch (error) {
-      console.error('Erreur dans le service lors de la création du fruit:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la création du fruit:');
       if (error instanceof ZodError) {
         throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
       }
@@ -39,10 +40,10 @@ class FruitService {
   async findAll(): Promise<Fruit[]> {
     try {
       const fruits = await fruitRepository.findAll();
-      console.log(`${fruits.length} fruits récupérés`);
+      logger.info(`${fruits.length} fruits récupérés`);
       return fruits;
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération des fruits:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération des fruits:');
       throw error;
     }
   }
@@ -51,13 +52,13 @@ class FruitService {
     try {
       const fruit = await fruitRepository.findById(id);
       if (!fruit) {
-        console.log(`Fruit avec l'ID ${id} non trouvé`);
+        logger.info(`Fruit avec l'ID ${id} non trouvé`);
         return null;
       }
-      console.log(`Fruit trouvé: ${fruit.nom}`);
+      logger.info(`Fruit trouvé: ${fruit.nom}`);
       return fruit;
     } catch (error) {
-      console.error('Erreur dans le service lors de la récupération du fruit:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la récupération du fruit:');
       throw error;
     }
   }
@@ -86,10 +87,10 @@ class FruitService {
       }
 
       const fruit = await fruitRepository.update(id, validatedData);
-      console.log(`Fruit mis à jour avec succès: ${fruit.nom}`);
+      logger.info(`Fruit mis à jour avec succès: ${fruit.nom}`);
       return fruit;
     } catch (error) {
-      console.error('Erreur dans le service lors de la mise à jour du fruit:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour du fruit:');
       if (error instanceof ZodError) {
         throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
       }
@@ -106,10 +107,10 @@ class FruitService {
       }
 
       const fruit = await fruitRepository.delete(id);
-      console.log(`Fruit supprimé avec succès: ${fruit.nom}`);
+      logger.info(`Fruit supprimé avec succès: ${fruit.nom}`);
       return fruit;
     } catch (error) {
-      console.error('Erreur dans le service lors de la suppression du fruit:', error);
+      logger.error({ err: error }, 'Erreur dans le service lors de la suppression du fruit:');
       throw error;
     }
   }

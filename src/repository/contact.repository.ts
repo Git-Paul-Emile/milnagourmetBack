@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js"
 import type { Contact, HoraireOuverture, ReseauSocial } from "@prisma/client"
+import { logger } from '../config/logger.js';
 
 class ContactRepository {
 
@@ -14,7 +15,7 @@ class ContactRepository {
             });
             return contact;
         } catch (error) {
-            console.error('Erreur lors de la récupération des informations de contact:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des informations de contact:');
             throw new Error('Impossible de récupérer les informations de contact');
         }
     }
@@ -53,7 +54,7 @@ class ContactRepository {
 
             return contact!;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour des informations de contact:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour des informations de contact:');
             throw new Error('Impossible de mettre à jour les informations de contact');
         }
     }
@@ -83,7 +84,7 @@ class ContactRepository {
 
             return createdHoraires;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour des horaires:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour des horaires:');
             throw new Error('Impossible de mettre à jour les horaires');
         }
     }
@@ -96,7 +97,7 @@ class ContactRepository {
             });
             return socialMedia;
         } catch (error) {
-            console.error('Erreur lors de la récupération des réseaux sociaux:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des réseaux sociaux:');
             throw new Error('Impossible de récupérer les réseaux sociaux');
         }
     }
@@ -121,7 +122,7 @@ class ContactRepository {
             const createdSocialMedia = await this.findAllSocialMedia();
             return createdSocialMedia;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour des réseaux sociaux:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour des réseaux sociaux:');
             throw new Error('Impossible de mettre à jour les réseaux sociaux');
         }
     }

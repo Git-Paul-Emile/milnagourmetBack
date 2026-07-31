@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js"
+import { logger } from "../config/logger.js"
 import type { Utilisateur, Prisma } from "@prisma/client"
 import type { RegisterInput } from "../validator/auth.schema.js"
 
@@ -27,6 +28,9 @@ class UserRepository {
         const user = await prisma.utilisateur.create({
           data: {
             telephone: data.telephone,
+            // `?? null` plutôt que `undefined` : la colonne est unique et
+            // nullable, plusieurs comptes peuvent rester sans email.
+            email: data.email ?? null,
             nomComplet: data.nomComplet,
             zoneLivraisonId: data.zoneLivraisonId,
             password: data.password, // Sera hashé dans le service
@@ -35,7 +39,7 @@ class UserRepository {
         });
         return user;
       } catch (error) {
-        console.error('Erreur lors de la création de l\'utilisateur:', error);
+        logger.error({ err: error }, "Erreur lors de la création de l'utilisateur");
         throw new Error(`Impossible de créer l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
       }
     }
@@ -54,7 +58,8 @@ class UserRepository {
             if (search) {
               where.OR = [
                 { nomComplet: { contains: search, mode: 'insensitive' } },
-                { telephone: { contains: search } }
+                { telephone: { contains: search } },
+                { email: { contains: search, mode: 'insensitive' } }
               ];
             }
 
@@ -87,7 +92,7 @@ class UserRepository {
 
             return { items: users, total };
         } catch (error) {
-            console.error('Erreur lors de la récupération des utilisateurs:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des utilisateurs:');
             throw new Error('Impossible de récupérer les utilisateurs');
         }
     }
@@ -102,7 +107,7 @@ class UserRepository {
             });
             return user;
         } catch (error) {
-            console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de l\'utilisateur:');
             throw new Error('Impossible de récupérer l\'utilisateur');
         }
     }
@@ -117,7 +122,7 @@ class UserRepository {
             });
             return user;
         } catch (error) {
-            console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de l\'utilisateur:');
             throw new Error('Impossible de récupérer l\'utilisateur');
         }
     }
@@ -133,7 +138,7 @@ class UserRepository {
             });
             return user;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour de l\'utilisateur:');
             throw error;
         }
     }
@@ -150,7 +155,7 @@ class UserRepository {
             });
             return user;
         } catch (error) {
-            console.error('Erreur lors de l\'incrémentation de la version du token:', error);
+            logger.error({ err: error }, 'Erreur lors de l\'incrémentation de la version du token:');
             throw new Error('Impossible de mettre à jour la version du token');
         }
     }
@@ -161,7 +166,7 @@ class UserRepository {
                 where: { id: parseInt(id) }
             });
         } catch (error) {
-            console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression de l\'utilisateur:');
             throw error;
         }
     }

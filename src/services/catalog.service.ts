@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { AppError } from '../utils/AppError.js';
+import { logger } from '../config/logger.js';
 
 
 
@@ -23,7 +24,7 @@ class CatalogService {
         emptySubMessage: catalog.messageVideSecondaire
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération des données Catalogue:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération des données Catalogue:');
       throw error;
     }
   }
@@ -70,7 +71,7 @@ class CatalogService {
         emptySubMessage: updatedCatalog.messageVideSecondaire
       };
     } catch (error) {
-      console.error('Erreur lors de la mise à jour des données Catalogue:', error);
+      logger.error({ err: error }, 'Erreur lors de la mise à jour des données Catalogue:');
       throw error;
     }
   }

@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { AppError } from '../utils/AppError.js';
+import { logger } from '../config/logger.js';
 
 
 
@@ -29,7 +30,7 @@ class HeroService {
         }))
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération des données Hero:', error);
+      logger.error({ err: error }, 'Erreur lors de la récupération des données Hero:');
       throw error;
     }
   }
@@ -66,7 +67,7 @@ class HeroService {
         }))
       };
     } catch (error) {
-      console.error('Erreur lors de la mise à jour des données Hero:', error);
+      logger.error({ err: error }, 'Erreur lors de la mise à jour des données Hero:');
       throw error;
     }
   }

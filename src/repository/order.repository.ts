@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js"
 import type { Commande, ElementCommande, CreationPersonnalisee, Utilisateur, Livreur, Produit, TailleCreation, StatutCommande, Prisma } from "@prisma/client"
+import { logger } from '../config/logger.js';
 
 export interface OrderListOptions {
   page?: number;
@@ -32,6 +33,8 @@ interface CreateOrderData {
   utilisateurId?: number;
   nomClient: string;
   telephoneClient: string;
+  /** Email de contact saisi à la commande : sert au repli des notifications. */
+  emailClient?: string | null;
   montantTotal: number;
   fraisLivraison?: number;
   notes?: string;
@@ -61,6 +64,7 @@ class OrderRepository {
             utilisateurId: data.utilisateurId,
             nomClient: data.nomClient,
             telephoneClient: data.telephoneClient,
+            emailClient: data.emailClient ?? null,
             montantTotal: data.montantTotal,
             fraisLivraison: data.fraisLivraison || 0,
             notes: data.notes,
@@ -117,7 +121,7 @@ class OrderRepository {
         });
         return order;
       } catch (error) {
-        console.error('Erreur lors de la création de la commande:', error);
+        logger.error({ err: error }, 'Erreur lors de la création de la commande:');
         throw new Error('Impossible de créer la commande');
       }
     }
@@ -135,6 +139,7 @@ class OrderRepository {
                 { numeroCommande: { contains: search, mode: 'insensitive' } },
                 { nomClient: { contains: search, mode: 'insensitive' } },
                 { telephoneClient: { contains: search } },
+                { emailClient: { contains: search, mode: 'insensitive' } },
                 { utilisateur: { nomComplet: { contains: search, mode: 'insensitive' } } },
                 { utilisateur: { telephone: { contains: search } } }
               ];
@@ -188,7 +193,7 @@ class OrderRepository {
 
             return { items: orders, total };
         } catch (error) {
-            console.error('Erreur lors de la récupération des commandes:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des commandes:');
             throw new Error('Impossible de récupérer les commandes');
         }
     }
@@ -229,7 +234,7 @@ class OrderRepository {
             });
             return order;
         } catch (error) {
-            console.error('Erreur lors de la récupération de la commande:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de la commande:');
             throw new Error('Impossible de récupérer la commande');
         }
     }
@@ -273,7 +278,7 @@ class OrderRepository {
             });
             return orders;
         } catch (error) {
-            console.error('Erreur lors de la récupération des commandes de l\'utilisateur:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des commandes de l\'utilisateur:');
             throw new Error('Impossible de récupérer les commandes de l\'utilisateur');
         }
     }
@@ -315,7 +320,7 @@ class OrderRepository {
             });
             return order;
         } catch (error) {
-            console.error('Erreur lors de la mise à jour du statut de la commande:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour du statut de la commande:');
             throw error;
         }
     }
@@ -357,7 +362,7 @@ class OrderRepository {
             });
             return order;
         } catch (error) {
-            console.error('Erreur lors de l\'assignation du livreur à la commande:', error);
+            logger.error({ err: error }, 'Erreur lors de l\'assignation du livreur à la commande:');
             throw error;
         }
     }
