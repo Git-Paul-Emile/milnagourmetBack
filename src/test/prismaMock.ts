@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi, type Mock } from 'vitest';
 
 /**
  * Double de test du client Prisma.
@@ -13,8 +13,36 @@ import { vi } from 'vitest';
  *
  *   prismaMock.utilisateur.findUnique.mockResolvedValue({ ... });
  */
-export function creerPrismaMock() {
-  const modele = () => ({
+type ModeleMock = {
+  findUnique: Mock;
+  findFirst: Mock;
+  findMany: Mock;
+  create: Mock;
+  update: Mock;
+  updateMany: Mock;
+  delete: Mock;
+  deleteMany: Mock;
+  count: Mock;
+  upsert: Mock;
+};
+
+type PrismaMockShape = {
+  utilisateur: ModeleMock;
+  commande: ModeleMock;
+  jetonReinitialisation: ModeleMock;
+  panier: ModeleMock;
+  elementPanier: ModeleMock;
+  produit: ModeleMock;
+  historiquePoints: ModeleMock;
+  zoneLivraison: ModeleMock;
+  $queryRaw: Mock;
+  $connect: Mock;
+  $disconnect: Mock;
+  $transaction: Mock;
+};
+
+export function creerPrismaMock(): PrismaMockShape {
+  const modele = (): ModeleMock => ({
     findUnique: vi.fn(),
     findFirst: vi.fn(),
     findMany: vi.fn(),
