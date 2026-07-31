@@ -10,7 +10,7 @@ import { updateProfileSchema } from '../validator/auth.schema.js';
 import type { Utilisateur } from '@prisma/client';
 import { logger } from '../config/logger.js';
 
-// Helper function to adapt user data for frontend with zone name
+// Helper function to adapt user data for frontend with zone namel
 async function adaptUserForFrontend(user: Utilisateur) {
   let zoneLivraison = null;
   if (user.zoneLivraisonId) {
