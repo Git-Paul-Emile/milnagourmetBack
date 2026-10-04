@@ -250,6 +250,43 @@ describe('POST /api/orders — validation', () => {
     expect(response.status).toBe(400);
     expect(response.body.message).toMatch(/indisponible/i);
   });
+
+  it("traite correctement une commande avec le compte 077896327 et n'importe quel produit", async () => {
+    prismaMock.zoneLivraison.findUnique.mockResolvedValue({
+      id: 1,
+      nom: 'Centre-ville',
+      fraisLivraison: 1000,
+      tempsEstime: '30 min',
+      active: true,
+    });
+    prismaMock.produit.findUnique.mockResolvedValue({ id: 99, prix: 1500, disponible: true });
+    prismaMock.commande.create.mockResolvedValue(commandeCreee);
+    prismaMock.commande.findUnique.mockResolvedValue(null);
+
+    const response = await request(app)
+      .post('/api/orders')
+      .send({
+        customer: { id: '', name: 'Testeur', phone: '077896327' },
+        items: [
+          {
+            id: '99',
+            name: "N'importe quel produit",
+            price: 1500,
+            quantity: 1,
+            product: { id: '99', category: 'creamy' },
+          },
+        ],
+        total: 1500,
+        deliveryZoneId: '1',
+      });
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.produit.findUnique).toHaveBeenCalledWith({ where: { id: 99 } });
+    
+    // Vérifier que le numéro 077896327 est bien utilisé
+    const donneeCreation = prismaMock.commande.create.mock.calls[0]?.[0] as any;
+    expect(donneeCreation?.data.telephoneClient).toBe('077896327');
+  });
 });
 
 describe('Routes de commande — contrôle d’accès', () => {
