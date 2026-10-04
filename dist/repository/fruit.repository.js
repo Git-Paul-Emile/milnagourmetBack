@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { logger } from '../config/logger.js';
 class FruitRepository {
     async create(data) {
         try {
@@ -6,7 +7,7 @@ class FruitRepository {
             return fruit;
         }
         catch (error) {
-            console.error('Erreur lors de la création du fruit:', error);
+            logger.error({ err: error }, 'Erreur lors de la création du fruit:');
             throw new Error('Impossible de créer le fruit');
         }
     }
@@ -19,7 +20,7 @@ class FruitRepository {
             return fruits;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération des fruits:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des fruits:');
             throw new Error('Impossible de récupérer les fruits');
         }
     }
@@ -31,7 +32,7 @@ class FruitRepository {
             return fruit;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération du fruit:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération du fruit:');
             throw new Error('Impossible de récupérer le fruit');
         }
     }
@@ -44,7 +45,7 @@ class FruitRepository {
             return fruit;
         }
         catch (error) {
-            console.error('Erreur lors de la mise à jour du fruit:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour du fruit:');
             throw new Error('Impossible de mettre à jour le fruit');
         }
     }
@@ -56,7 +57,7 @@ class FruitRepository {
             return fruit;
         }
         catch (error) {
-            console.error('Erreur lors de la suppression du fruit:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression du fruit:');
             throw new Error('Impossible de supprimer le fruit');
         }
     }

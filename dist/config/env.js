@@ -1,8 +1,26 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import path from 'path';
-// Charger les variables d'environnement
-dotenv.config({ path: path.join(process.cwd(), '.env') });
+// Charger les variables d'environnement.
+// `quiet` supprime la bannière du chargeur, qui pollue la sortie des tests.
+dotenv.config({ path: path.join(process.cwd(), '.env'), quiet: true });
+const DEFAULT_VENDOR_EMAIL = 'business.libreville23@gmail.com';
+function optionalNonPlaceholderString(value) {
+    if (typeof value !== 'string')
+        return undefined;
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === 'your_resend_api_key')
+        return undefined;
+    return trimmed;
+}
+function optionalVendorEmail(value) {
+    if (typeof value !== 'string')
+        return undefined;
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === 'vendor@example.com')
+        return undefined;
+    return trimmed;
+}
 const envSchema = z.object({
     // Server
     PORT: z.string().default('3000').transform(Number),
@@ -18,12 +36,39 @@ const envSchema = z.object({
     // Token Expiry
     ACCESS_TOKEN_EXPIRY: z.string().default('15m'),
     REFRESH_TOKEN_EXPIRY: z.string().default('7d'),
+    // Journalisation. `silent` coupe totalement la sortie : utile en test
+    // et pour un diagnostic ponctuel en production.
+    LOG_LEVEL: z
+        .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+        .optional(),
     // CORS
     FRONT_URL: z.string().url().default('http://localhost:5173'),
     CORS_ORIGINS: z.string().optional().default(''),
-    // Telnyx / WhatsApp (envoi des notifications de commande)
-    // Toutes optionnelles : sans elles, les notifications sont ignorées en
-    // silence, le reste de l'application fonctionne normalement.
+    // URL publique du site, utilisée pour construire les liens envoyés par
+    // email (réinitialisation de mot de passe notamment).
+    PUBLIC_APP_URL: z.string().url().default('http://localhost:8080'),
+    // ------------------------------------------------------------------
+    // Notifications — canal EMAIL (Resend)
+    // ------------------------------------------------------------------
+    // Canal par défaut tant que WhatsApp Business n'est pas activé côté
+    // Telnyx. C'est aussi le seul canal utilisable pour la réinitialisation
+    // de mot de passe.
+    RESEND_API_KEY: z.preprocess(optionalNonPlaceholderString, z
+        .string()
+        .regex(/^re_/, 'RESEND_API_KEY doit etre une vraie cle Resend et commencer par "re_".')
+        .optional()),
+    // Expéditeur : doit appartenir à un domaine vérifié dans Resend.
+    MAIL_FROM: z.string().default('Milna Gourmet <contact@milnagourmet.com>'),
+    // Boîte du vendeur qui reçoit les nouvelles commandes.
+    // Chaîne vide traitée comme absente : certains hébergeurs (Render)
+    // conservent une variable "" plutôt que de la supprimer.
+    VENDOR_EMAIL: z.preprocess(optionalVendorEmail, z.string().email().default(DEFAULT_VENDOR_EMAIL)),
+    // ------------------------------------------------------------------
+    // Notifications — canal WHATSAPP (Telnyx)
+    // ------------------------------------------------------------------
+    // Optionnelles : tant qu'elles sont absentes, le service bascule
+    // automatiquement sur l'email. Aucune configuration n'est requise ici
+    // pour que l'application fonctionne.
     TELNYX_API_KEY: z.string().optional(),
     TELNYX_BASE_URL: z.string().default('https://api.telnyx.com/v2'),
     TELNYX_WHATSAPP_FROM: z.string().optional(), // numéro WhatsApp Business expéditeur
@@ -38,4 +83,48 @@ if (!parsedEnv.success) {
     process.exit(1);
 }
 export const env = parsedEnv.data;
+/**
+ * Garde-fou de démarrage en production.
+ *
+ * Principe : mieux vaut un déploiement qui échoue bruyamment qu'un service
+ * qui tourne en perdant silencieusement des commandes. Sans au moins un
+ * canal de notification configuré, une commande peut être enregistrée sans
+ * que personne ne soit jamais prévenu.
+ *
+ * Le canal de notification (email/WhatsApp) est en avertissement non-bloquant
+ * le temps que le compte Resend soit créé — seul CORS_ORIGINS vide bloque
+ * encore le démarrage, car c'est une faille de sécurité et non une
+ * fonctionnalité manquante.
+ *
+ * Appelée au démarrage (src/index.ts), jamais pendant les tests.
+ */
+export function assertProductionConfig() {
+    if (env.NODE_ENV !== 'production')
+        return;
+    const avertissements = [];
+    const erreurs = [];
+    const emailPret = Boolean(env.RESEND_API_KEY && env.VENDOR_EMAIL);
+    const whatsappPret = Boolean(env.TELNYX_API_KEY && env.TELNYX_WHATSAPP_FROM && env.VENDOR_WHATSAPP_NUMBER);
+    if (!emailPret && !whatsappPret) {
+        avertissements.push("Aucun canal de notification configuré. Renseignez RESEND_API_KEY + VENDOR_EMAIL " +
+            "(canal email) ou TELNYX_API_KEY + TELNYX_WHATSAPP_FROM + VENDOR_WHATSAPP_NUMBER (canal WhatsApp).");
+    }
+    // La réinitialisation de mot de passe passe obligatoirement par email :
+    // sans Resend, la fonctionnalité serait inopérante.
+    if (!env.RESEND_API_KEY) {
+        avertissements.push("RESEND_API_KEY manquante : la réinitialisation de mot de passe ne pourra pas fonctionner.");
+    }
+    if (env.CORS_ORIGINS.trim() === '') {
+        erreurs.push("CORS_ORIGINS vide : aucune origine de production autorisée.");
+    }
+    if (avertissements.length > 0) {
+        console.warn('⚠️  Configuration de production incomplète :');
+        avertissements.forEach((a) => console.warn(`   - ${a}`));
+    }
+    if (erreurs.length > 0) {
+        console.error('❌ Configuration de production incomplète :');
+        erreurs.forEach((e) => console.error(`   - ${e}`));
+        process.exit(1);
+    }
+}
 //# sourceMappingURL=env.js.map

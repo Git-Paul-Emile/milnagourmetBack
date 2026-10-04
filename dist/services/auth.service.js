@@ -1,16 +1,30 @@
 import userRepository from '../repository/user.repository.js';
-import { registerSchema, loginSchema } from '../validator/auth.schema.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../config/jwt.js';
 import bcrypt from 'bcrypt';
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
+import { logger } from '../config/logger.js';
 class AuthService {
     userRepository = userRepository;
+    /**
+     * Inscription d'un nouvel utilisateur.
+     *
+     * ATTENTION — VALIDATION UNIQUE
+     * Les données arrivent DÉJÀ validées et transformées par le middleware
+     * `validateResource(registerSchema)` monté sur la route. Il ne faut
+     * surtout pas revalider ici : `zoneLivraisonId` a été converti de
+     * `string` en `number` par le schéma, et une seconde passe échouerait
+     * systématiquement avec « expected string, received number » — c'est
+     * exactement le bug que ce commentaire prévient.
+     *
+     * Règle générale : un schéma qui transforme ses données ne peut pas
+     * être appliqué deux fois. La validation appartient à la frontière
+     * HTTP, pas au service.
+     */
     async register(data) {
         try {
-            // Validation des données
-            const validatedData = registerSchema.parse(data);
+            const validatedData = data;
             // Vérifier si un utilisateur avec ce téléphone existe déjà
             const existingUser = await userRepository.findByPhone(validatedData.telephone);
             if (existingUser) {
@@ -27,10 +41,10 @@ class AuthService {
                 try {
                     const cartService = (await import('./cart.service.js')).default;
                     await cartService.mergeGuestCart(user.id, validatedData.guestCart);
-                    console.log(`Panier guest fusionné pour le nouvel utilisateur: ${user.nomComplet}`);
+                    logger.info(`Panier guest fusionné pour le nouvel utilisateur: ${user.nomComplet}`);
                 }
                 catch (mergeError) {
-                    console.error('Erreur lors de la fusion du panier guest à l\'inscription (ignorée) :', mergeError);
+                    logger.error({ err: mergeError }, 'Erreur lors de la fusion du panier guest à l\'inscription (ignorée) :');
                 }
             }
             // Générer les tokens après création de l'utilisateur
@@ -45,11 +59,13 @@ class AuthService {
                 userId: user.id.toString(),
                 tokenVersion: user.tokenVersion
             });
-            console.log(`Utilisateur créé avec succès: ${user.nomComplet} (${user.telephone})`);
+            logger.info(`Utilisateur créé avec succès: ${user.nomComplet} (${user.telephone})`);
             return { user, accessToken, refreshToken };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de l\'inscription:', error);
+            logger.error({ err: error }, "Erreur dans le service lors de l'inscription");
+            // Filet : si un appelant interne transmettait un jour des données
+            // non validées, on renvoie un 400 explicite plutôt qu'un 500.
             if (error instanceof ZodError) {
                 throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
             }
@@ -78,10 +94,10 @@ class AuthService {
                 try {
                     const cartService = (await import('./cart.service.js')).default;
                     await cartService.mergeGuestCart(user.id, validatedData.guestCart);
-                    console.log(`Panier guest fusionné pour l'utilisateur: ${user.nomComplet}`);
+                    logger.info(`Panier guest fusionné pour l'utilisateur: ${user.nomComplet}`);
                 }
                 catch (mergeError) {
-                    console.error('Erreur lors de la fusion du panier guest à la connexion (ignorée) :', mergeError);
+                    logger.error({ err: mergeError }, 'Erreur lors de la fusion du panier guest à la connexion (ignorée) :');
                 }
             }
             // Générer les tokens
@@ -96,11 +112,11 @@ class AuthService {
                 userId: user.id.toString(),
                 tokenVersion: user.tokenVersion
             });
-            console.log(`Connexion réussie pour: ${user.nomComplet} (${user.telephone})`);
+            logger.info(`Connexion réussie pour: ${user.nomComplet} (${user.telephone})`);
             return { user, accessToken, refreshToken };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la connexion:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la connexion:');
             throw error;
         }
     }
@@ -134,7 +150,7 @@ class AuthService {
             return { accessToken: newAccessToken, refreshToken: newRefreshToken };
         }
         catch (error) {
-            console.error('Erreur lors du rafraîchissement du token:', error);
+            logger.error({ err: error }, 'Erreur lors du rafraîchissement du token:');
             // Un refresh token expiré/invalide (erreur jwt brute) doit se traduire par 401, pas 500
             if (error instanceof AppError) {
                 throw error;
@@ -145,10 +161,10 @@ class AuthService {
     async logoutAll(userId) {
         try {
             await userRepository.incrementTokenVersion(userId);
-            console.log(`Déconnexion de tous les appareils pour l'utilisateur: ${userId}`);
+            logger.info(`Déconnexion de tous les appareils pour l'utilisateur: ${userId}`);
         }
         catch (error) {
-            console.error('Erreur lors de la déconnexion globale:', error);
+            logger.error({ err: error }, 'Erreur lors de la déconnexion globale:');
             throw error;
         }
     }
@@ -158,7 +174,7 @@ class AuthService {
             return user;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération de l\'utilisateur:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération de l\'utilisateur:');
             throw error;
         }
     }
@@ -170,6 +186,12 @@ class AuthService {
                 updatePayload.nomComplet = updateData.nom;
             if (updateData.telephone)
                 updatePayload.telephone = updateData.telephone;
+            // `!== undefined` et non `if (updateData.email)` : il faut pouvoir
+            // effacer une adresse en envoyant une chaîne vide, que le schéma
+            // transforme en `undefined`… donc seule une valeur explicitement
+            // fournie met le champ à jour.
+            if (updateData.email !== undefined)
+                updatePayload.email = updateData.email;
             if (updateData.deliveryZoneId) {
                 // Le frontend envoie deliveryZoneId (id de la zone)
                 updatePayload.zoneLivraisonId = updateData.deliveryZoneId;
@@ -192,21 +214,21 @@ class AuthService {
                 }
             }
             const updatedUser = await userRepository.update(id, updatePayload);
-            console.log(`Profil mis à jour pour: ${updatedUser.nomComplet} (${updatedUser.telephone})`);
+            logger.info(`Profil mis à jour pour: ${updatedUser.nomComplet} (${updatedUser.telephone})`);
             return updatedUser;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la mise à jour du profil:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour du profil:');
             throw error;
         }
     }
     async deleteAccount(userId) {
         try {
             await userRepository.delete(userId);
-            console.log(`Compte supprimé pour l'utilisateur: ${userId}`);
+            logger.info(`Compte supprimé pour l'utilisateur: ${userId}`);
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la suppression du compte:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la suppression du compte:');
             throw error;
         }
     }

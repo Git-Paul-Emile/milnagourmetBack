@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { logger } from '../config/logger.js';
 class TailleCreationRepository {
     async create(data) {
         try {
@@ -6,7 +7,7 @@ class TailleCreationRepository {
             return taille;
         }
         catch (error) {
-            console.error('Erreur lors de la création de la taille:', error);
+            logger.error({ err: error }, 'Erreur lors de la création de la taille:');
             throw new Error('Impossible de créer la taille');
         }
     }
@@ -19,7 +20,7 @@ class TailleCreationRepository {
             return tailles;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération des tailles:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des tailles:');
             throw new Error('Impossible de récupérer les tailles');
         }
     }
@@ -31,7 +32,7 @@ class TailleCreationRepository {
             return taille;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération de la taille:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de la taille:');
             throw new Error('Impossible de récupérer la taille');
         }
     }
@@ -44,7 +45,7 @@ class TailleCreationRepository {
             return taille;
         }
         catch (error) {
-            console.error('Erreur lors de la mise à jour de la taille:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour de la taille:');
             throw new Error('Impossible de mettre à jour la taille');
         }
     }
@@ -56,7 +57,7 @@ class TailleCreationRepository {
             return taille;
         }
         catch (error) {
-            console.error('Erreur lors de la suppression de la taille:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression de la taille:');
             throw new Error('Impossible de supprimer la taille');
         }
     }

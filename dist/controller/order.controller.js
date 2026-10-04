@@ -3,7 +3,8 @@ import { prisma } from '../config/database.js';
 import orderRepository from '../repository/order.repository.js';
 import { jsonResponse, AppError, buildPaginationMeta } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
-import { WhatsAppService } from '../services/whatsapp.service.js';
+import { NotificationService } from '../services/notification/notification.service.js';
+import { logger } from '../config/logger.js';
 import { LoyaltyService } from '../services/loyalty.service.js';
 import deliveryZoneService from '../services/deliveryZone.service.js';
 import { orderQuerySchema } from '../validator/query.schema.js';
@@ -80,7 +81,7 @@ async function adaptOrderToFrontend(order) {
             }
         }
         catch (error) {
-            console.error('Erreur lors de la récupération de la zone de livraison:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de la zone de livraison:');
         }
     }
     return {
@@ -113,17 +114,35 @@ class OrderController {
     async create(req, res, next) {
         try {
             const orderData = req.body;
-            const utilisateurId = orderData.customer ? parseInt(orderData.customer.id) : undefined;
+            /**
+             * Identifiant du compte rattaché à la commande, s'il y en a un.
+             *
+             * Une commande invité transmet quand même un bloc `customer` (nom,
+             * téléphone, email de suivi) mais sans identifiant. `parseInt('')`
+             * renvoie `NaN` : si on le laissait passer, Prisma recevrait `NaN`
+             * comme clé étrangère et l'insertion échouerait. On ne conserve
+             * donc la valeur que si c'est un entier positif.
+             */
+            const identifiantBrut = orderData.customer?.id ? parseInt(orderData.customer.id, 10) : NaN;
+            const utilisateurId = Number.isInteger(identifiantBrut) && identifiantBrut > 0 ? identifiantBrut : undefined;
             // Séparer les produits et les créations personnalisées
-            const products = orderData.items.filter(item => item.product && !item.id.startsWith('creation'));
-            const creations = orderData.items.filter(item => item.customCreation || item.id.startsWith('creation'));
+            const isCreationItem = (item) => Boolean(item.customCreation) || item.id.startsWith('creation');
+            const parsePositiveId = (value) => {
+                const parsed = typeof value === 'number' ? value : parseInt(value || '', 10);
+                return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+            };
+            const products = orderData.items.filter(item => !isCreationItem(item));
+            const creations = orderData.items.filter(isCreationItem);
             if (products.length === 0 && creations.length === 0) {
                 throw new AppError('La commande ne contient aucun article', StatusCodes.BAD_REQUEST);
             }
             // Résoudre le prix officiel de chaque produit depuis la base (ne jamais faire confiance au prix envoyé par le client)
             let montantProduits = 0;
             const resolvedElements = await Promise.all(products.map(async (item) => {
-                const produitId = parseInt(item.id);
+                const produitId = parsePositiveId(item.product?.id ?? item.id);
+                if (!produitId) {
+                    throw new AppError(`Produit invalide : ${item.name}`, StatusCodes.BAD_REQUEST);
+                }
                 const produit = await prisma.produit.findUnique({ where: { id: produitId } });
                 if (!produit || !produit.disponible) {
                     throw new AppError(`Produit indisponible : ${item.name}`, StatusCodes.BAD_REQUEST);
@@ -188,6 +207,9 @@ class OrderController {
                 utilisateurId,
                 nomClient: orderData.customer?.name || 'Client anonyme',
                 telephoneClient: orderData.customer?.phone || 'Non spécifié',
+                // Conservé sur la commande : permet de notifier le client par email
+                // même s'il n'a pas de compte, et sans dépendre du profil.
+                emailClient: orderData.customer?.email?.trim() || null,
                 statut: 'RECU',
                 montantTotal: Math.max(0, montantAvantRemise - remise),
                 fraisLivraison,
@@ -197,9 +219,12 @@ class OrderController {
             };
             const order = await orderRepository.create(dbOrderData);
             const fullOrder = await orderRepository.findById(order.id);
-            // Envoi asynchrone de la notification WhatsApp au vendeur (n'échoue jamais la commande)
+            // Notification du vendeur, volontairement asynchrone : une panne du
+            // fournisseur ne doit jamais faire échouer une vente. Le résultat est
+            // tracé sur la commande (notificationEnvoyee / notificationErreur),
+            // ce qui permet au dashboard de signaler et de renvoyer les échecs.
             if (fullOrder) {
-                WhatsAppService.sendOrderNotification(fullOrder).catch((error) => console.error('Erreur WhatsApp ignorée :', error));
+                void NotificationService.notifierVendeurNouvelleCommande(fullOrder).catch((error) => logger.error({ commandeId: order.id, erreur: error instanceof Error ? error.message : String(error) }, 'Notification vendeur en échec'));
             }
             // Vider le panier et solder les points de fidélité de l'utilisateur connecté
             if (utilisateurId) {
@@ -213,7 +238,7 @@ class OrderController {
                     await LoyaltyService.addPoints(utilisateurId, order.id, montantAvantRemise);
                 }
                 catch (error) {
-                    console.error('[ORDER CREATION] Erreur lors de l\'ajout des points de fidélité:', error);
+                    logger.error({ err: error }, '[ORDER CREATION] Erreur lors de l\'ajout des points de fidélité:');
                 }
             }
             const adaptedOrder = await adaptOrderToFrontend(order);
@@ -340,9 +365,9 @@ class OrderController {
                 throw new AppError(`Impossible de modifier le statut d'une commande déjà ${existingOrder.statut === 'LIVREE' ? 'livrée' : 'annulée'}`, StatusCodes.BAD_REQUEST);
             }
             const order = await orderRepository.updateStatus(id, newStatus);
-            // Notification WhatsApp asynchrone au client (n'échoue jamais la mise à jour)
+            // Notification client asynchrone (n'échoue jamais la mise à jour)
             if (newStatus === 'LIVREE' || newStatus === 'ANNULEE') {
-                WhatsAppService.sendCustomerStatusNotification(order, newStatus).catch((error) => console.error('Erreur notification client ignorée :', error));
+                void NotificationService.notifierClientStatutCommande(order, newStatus).catch((error) => logger.error({ commandeId: order.id, erreur: error instanceof Error ? error.message : String(error) }, 'Notification client en échec'));
             }
             // Adapter les données pour le frontend
             const adaptedOrder = await adaptOrderToFrontend(order);

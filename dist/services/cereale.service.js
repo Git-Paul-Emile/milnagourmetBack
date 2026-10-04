@@ -3,6 +3,7 @@ import { CerealeCreateSchema, CerealeUpdateSchema } from '../validator/creation.
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
+import { logger } from '../config/logger.js';
 class CerealeService {
     cerealeRepository = cerealeRepository;
     async create(data) {
@@ -16,11 +17,11 @@ class CerealeService {
                 throw new AppError('Une céréale avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
             }
             const cereale = await cerealeRepository.create(validatedData);
-            console.log(`Céréale créée avec succès: ${cereale.nom}`);
+            logger.info(`Céréale créée avec succès: ${cereale.nom}`);
             return cereale;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la création de la céréale:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la création de la céréale:');
             if (error instanceof ZodError) {
                 throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
             }
@@ -30,11 +31,11 @@ class CerealeService {
     async findAll() {
         try {
             const cereales = await cerealeRepository.findAll();
-            console.log(`${cereales.length} céréales récupérées`);
+            logger.info(`${cereales.length} céréales récupérées`);
             return cereales;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération des céréales:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération des céréales:');
             throw error;
         }
     }
@@ -42,14 +43,14 @@ class CerealeService {
         try {
             const cereale = await cerealeRepository.findById(id);
             if (!cereale) {
-                console.log(`Céréale avec l'ID ${id} non trouvée`);
+                logger.info(`Céréale avec l'ID ${id} non trouvée`);
                 return null;
             }
-            console.log(`Céréale trouvée: ${cereale.nom}`);
+            logger.info(`Céréale trouvée: ${cereale.nom}`);
             return cereale;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération de la céréale:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération de la céréale:');
             throw error;
         }
     }
@@ -71,11 +72,11 @@ class CerealeService {
                 }
             }
             const cereale = await cerealeRepository.update(id, validatedData);
-            console.log(`Céréale mise à jour avec succès: ${cereale.nom}`);
+            logger.info(`Céréale mise à jour avec succès: ${cereale.nom}`);
             return cereale;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la mise à jour de la céréale:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour de la céréale:');
             if (error instanceof ZodError) {
                 throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
             }
@@ -90,11 +91,11 @@ class CerealeService {
                 throw new AppError('Céréale non trouvée', StatusCodes.NOT_FOUND);
             }
             const cereale = await cerealeRepository.delete(id);
-            console.log(`Céréale supprimée avec succès: ${cereale.nom}`);
+            logger.info(`Céréale supprimée avec succès: ${cereale.nom}`);
             return cereale;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la suppression de la céréale:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la suppression de la céréale:');
             throw error;
         }
     }

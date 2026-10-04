@@ -3,6 +3,7 @@ import { ProductCategoryCreateSchema, ProductCategoryUpdateSchema } from '../val
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
+import { logger } from '../config/logger.js';
 class CategorieService {
     categorieRepository = categorieRepository;
     async create(data) {
@@ -16,7 +17,7 @@ class CategorieService {
                 throw new AppError('Une catégorie avec ce nom existe déjà', StatusCodes.BAD_REQUEST);
             }
             const categorie = await categorieRepository.create(validatedData);
-            console.log(`Catégorie créée avec succès: ${categorie.nom}`);
+            logger.info(`Catégorie créée avec succès: ${categorie.nom}`);
             // Transformer les données pour correspondre à l'interface front-end
             return {
                 id: categorie.id,
@@ -27,7 +28,7 @@ class CategorieService {
             };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la création de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la création de la catégorie:');
             if (error instanceof ZodError) {
                 throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
             }
@@ -37,7 +38,7 @@ class CategorieService {
     async findAll() {
         try {
             const categories = await categorieRepository.findAll();
-            console.log(`${categories.length} catégories récupérées`);
+            logger.info(`${categories.length} catégories récupérées`);
             // Transformer les données pour correspondre à l'interface front-end
             return categories.map(cat => ({
                 id: cat.id,
@@ -48,7 +49,7 @@ class CategorieService {
             }));
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération des catégories:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération des catégories:');
             throw error;
         }
     }
@@ -56,14 +57,14 @@ class CategorieService {
         try {
             const categorie = await categorieRepository.findById(id);
             if (!categorie) {
-                console.log(`Catégorie avec l'ID ${id} non trouvée`);
+                logger.info(`Catégorie avec l'ID ${id} non trouvée`);
                 return null;
             }
-            console.log(`Catégorie trouvée: ${categorie.nom}`);
+            logger.info(`Catégorie trouvée: ${categorie.nom}`);
             return categorie;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération de la catégorie:');
             throw error;
         }
     }
@@ -85,7 +86,7 @@ class CategorieService {
                 }
             }
             const categorie = await categorieRepository.update(id, validatedData);
-            console.log(`Catégorie mise à jour avec succès: ${categorie.nom}`);
+            logger.info(`Catégorie mise à jour avec succès: ${categorie.nom}`);
             // Transformer les données pour correspondre à l'interface front-end
             return {
                 id: categorie.id,
@@ -96,7 +97,7 @@ class CategorieService {
             };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la mise à jour de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour de la catégorie:');
             if (error instanceof ZodError) {
                 throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
             }
@@ -111,11 +112,11 @@ class CategorieService {
                 throw new AppError('Catégorie non trouvée', StatusCodes.NOT_FOUND);
             }
             const categorie = await categorieRepository.delete(id);
-            console.log(`Catégorie supprimée avec succès: ${categorie.nom}`);
+            logger.info(`Catégorie supprimée avec succès: ${categorie.nom}`);
             return categorie;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la suppression de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la suppression de la catégorie:');
             throw error;
         }
     }

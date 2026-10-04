@@ -3,6 +3,7 @@ import { ProductCreateSchema, ProductUpdateSchema } from '../validator/product.s
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
+import { logger } from '../config/logger.js';
 class ProductService {
     productRepository = productRepository;
     async create(data) {
@@ -10,12 +11,12 @@ class ProductService {
             // Validation des données
             const validatedData = ProductCreateSchema.parse(data);
             const product = await productRepository.create(validatedData);
-            console.log(`Produit créé avec succès: ${product.nom}`);
+            logger.info(`Produit créé avec succès: ${product.nom}`);
             // Transformer les données pour correspondre à l'interface front-end
             return this.transformProduct(product);
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la création du produit:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la création du produit:');
             if (error instanceof ZodError) {
                 throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
             }
@@ -30,7 +31,7 @@ class ProductService {
             return { items, total };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération des produits:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération des produits:');
             throw error;
         }
     }
@@ -38,14 +39,14 @@ class ProductService {
         try {
             const product = await productRepository.findById(id);
             if (!product) {
-                console.log(`Produit avec l'ID ${id} non trouvé`);
+                logger.info(`Produit avec l'ID ${id} non trouvé`);
                 return null;
             }
-            console.log(`Produit trouvé: ${product.nom}`);
+            logger.info(`Produit trouvé: ${product.nom}`);
             return this.transformProduct(product);
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération du produit:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération du produit:');
             throw error;
         }
     }
@@ -59,12 +60,12 @@ class ProductService {
                 throw new AppError('Produit non trouvé', StatusCodes.NOT_FOUND);
             }
             const product = await productRepository.update(id, validatedData);
-            console.log(`Produit mis à jour avec succès: ${product.nom}`);
+            logger.info(`Produit mis à jour avec succès: ${product.nom}`);
             // Transformer les données pour correspondre à l'interface front-end
             return this.transformProduct(product);
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la mise à jour du produit:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour du produit:');
             if (error instanceof ZodError) {
                 throw new AppError(error.issues.map((issue) => issue.message).join(', '), StatusCodes.BAD_REQUEST);
             }
@@ -79,11 +80,11 @@ class ProductService {
                 throw new AppError('Produit non trouvé', StatusCodes.NOT_FOUND);
             }
             const product = await productRepository.delete(id);
-            console.log(`Produit supprimé avec succès: ${product.nom}`);
+            logger.info(`Produit supprimé avec succès: ${product.nom}`);
             return this.transformProduct(product);
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la suppression du produit:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la suppression du produit:');
             throw error;
         }
     }

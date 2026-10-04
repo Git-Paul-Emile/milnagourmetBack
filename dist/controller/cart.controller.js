@@ -3,7 +3,7 @@ import { jsonResponse, AppError } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
 import cloudinary from '../config/cloudinary.js';
 //TODO: refaire le service cartservice avec les bonnes pratiques
-const DEFAULT_CREATION_IMAGE = cloudinary.url('milnagourmet/creation/yogurt-creation.jpg', { secure: true });
+const DEFAULT_CREATION_IMAGE = cloudinary.url('milnagourmet/creation/image-creation-panier.png', { secure: true });
 class CartController {
     cartService = cartService;
     // Récupérer le panier de l'utilisateur connecté
@@ -26,7 +26,18 @@ class CartController {
                         description: element.produit?.description || '',
                         price: element.prix,
                         quantity: element.quantite,
-                        image: element.produit?.image || ''
+                        image: element.produit?.image || '',
+                        product: element.produit ? {
+                            id: element.produit.id.toString(),
+                            name: element.produit.nom,
+                            category: String(element.produit.categorie).toLowerCase(),
+                            categoryId: element.produit.categorieId?.toString(),
+                            price: element.produit.prix,
+                            description: element.produit.description || '',
+                            image: element.produit.image || '',
+                            available: element.produit.disponible,
+                            archived: false
+                        } : undefined
                     })),
                     // Créations personnalisées
                     ...(cart.creations ?? []).map(creation => ({

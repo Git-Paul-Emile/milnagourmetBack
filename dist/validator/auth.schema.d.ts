@@ -1,6 +1,7 @@
 import { z } from 'zod';
 export declare const registerSchema: z.ZodObject<{
     telephone: z.ZodString;
+    email: z.ZodUnion<[z.ZodOptional<z.ZodString>, z.ZodPipe<z.ZodLiteral<"">, z.ZodTransform<undefined, "">>]>;
     nomComplet: z.ZodString;
     zoneLivraisonId: z.ZodPipe<z.ZodString, z.ZodTransform<number, string>>;
     password: z.ZodString;
@@ -43,6 +44,7 @@ export declare const loginSchema: z.ZodObject<{
 export declare const updateProfileSchema: z.ZodObject<{
     nom: z.ZodOptional<z.ZodString>;
     telephone: z.ZodOptional<z.ZodString>;
+    email: z.ZodUnion<[z.ZodOptional<z.ZodString>, z.ZodPipe<z.ZodLiteral<"">, z.ZodTransform<undefined, "">>]>;
     deliveryZoneId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<number, string>>>;
     ancienMotDePasse: z.ZodOptional<z.ZodString>;
     motDePasse: z.ZodOptional<z.ZodString>;

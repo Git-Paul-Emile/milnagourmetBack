@@ -8,8 +8,8 @@ export declare const orderQuerySchema: z.ZodObject<{
         desc: "desc";
     }>>;
     sortBy: z.ZodOptional<z.ZodEnum<{
-        status: "status";
         date: "date";
+        status: "status";
         total: "total";
     }>>;
     status: z.ZodOptional<z.ZodEnum<{
@@ -30,8 +30,8 @@ export declare const userQuerySchema: z.ZodObject<{
         desc: "desc";
     }>>;
     sortBy: z.ZodOptional<z.ZodEnum<{
-        name: "name";
         date: "date";
+        name: "name";
         orders: "orders";
     }>>;
     blocked: z.ZodOptional<z.ZodEnum<{
@@ -48,8 +48,8 @@ export declare const productQuerySchema: z.ZodObject<{
         desc: "desc";
     }>>;
     sortBy: z.ZodOptional<z.ZodEnum<{
-        name: "name";
         date: "date";
+        name: "name";
         price: "price";
     }>>;
     category: z.ZodOptional<z.ZodString>;

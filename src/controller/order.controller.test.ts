@@ -29,6 +29,21 @@ vi.mock('../services/notification/notification.service.js', () => ({
 
 const { default: app } = await import('../config/app.js');
 
+const commandeCreee = {
+  id: 1,
+  numeroCommande: 'CMD-TEST',
+  utilisateur: null,
+  nomClient: 'Awa',
+  telephoneClient: '+241066000000',
+  montantTotal: 2000,
+  statut: 'RECU',
+  creeLe: new Date('2026-10-04T10:00:00.000Z'),
+  notes: null,
+  elements: [],
+  creationsPersonnalisees: [],
+  livreur: null,
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -115,6 +130,66 @@ describe('POST /api/orders — validation', () => {
     // il n'a donc buté ni sur la validation, ni sur un `NaN` mal formé.
     expect(response.status).toBe(500);
     expect(response.body.message).not.toMatch(/NaN/i);
+  });
+
+  it("accepte un produit sans champ product quand l'id contient l'id produit", async () => {
+    prismaMock.zoneLivraison.findUnique.mockResolvedValue({
+      id: 1,
+      nom: 'Centre-ville',
+      fraisLivraison: 1000,
+      tempsEstime: '30 min',
+      active: true,
+    });
+    prismaMock.produit.findUnique.mockResolvedValue({ id: 1, prix: 1000, disponible: true });
+    prismaMock.commande.create.mockResolvedValue(commandeCreee);
+    prismaMock.commande.findUnique.mockResolvedValue(null);
+
+    const response = await request(app)
+      .post('/api/orders')
+      .send({
+        customer: { id: '', name: 'Awa', phone: '+241066000000' },
+        items: [
+          { id: '1-1790000000000', name: 'Yaourt', price: 1000, quantity: 1 },
+        ],
+        total: 1000,
+        deliveryZoneId: '1',
+      });
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.produit.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+  });
+
+  it("utilise product.id comme identifiant fiable quand l'id de ligne contient un suffixe", async () => {
+    prismaMock.zoneLivraison.findUnique.mockResolvedValue({
+      id: 1,
+      nom: 'Centre-ville',
+      fraisLivraison: 1000,
+      tempsEstime: '30 min',
+      active: true,
+    });
+    prismaMock.produit.findUnique.mockResolvedValue({ id: 1, prix: 1000, disponible: true });
+    prismaMock.commande.create.mockResolvedValue(commandeCreee);
+    prismaMock.commande.findUnique.mockResolvedValue(null);
+
+    const response = await request(app)
+      .post('/api/orders')
+      .send({
+        customer: { id: '', name: 'Awa', phone: '+241066000000' },
+        items: [
+          {
+            id: '999-1790000000000',
+            name: 'Yaourt',
+            price: 1000,
+            quantity: 1,
+            product: { id: '1', category: 'cremeux' },
+          },
+        ],
+        total: 1000,
+        deliveryZoneId: '1',
+      });
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.produit.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
   });
 
   it("ignore un prix falsifié par le client et retient celui de la base", async () => {

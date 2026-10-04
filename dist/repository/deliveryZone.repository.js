@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from '../config/database.js';
+// Client Prisma partagé : instancier un second client ouvrirait un
+// pool de connexions supplémentaire, épuisant le quota PostgreSQL.
 class DeliveryZoneRepository {
     async findAll() {
         return await prisma.zoneLivraison.findMany({

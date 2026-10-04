@@ -38,6 +38,7 @@ export declare const CerealeUpdateSchema: z.ZodObject<{
 export declare const TailleCreationCreateSchema: z.ZodObject<{
     nom: z.ZodString;
     prix: z.ZodNumber;
+    image: z.ZodOptional<z.ZodString>;
     maxFruits: z.ZodNumber;
     maxSauces: z.ZodNumber;
     cerealesAutorise: z.ZodDefault<z.ZodBoolean>;
@@ -47,6 +48,7 @@ export declare const TailleCreationCreateSchema: z.ZodObject<{
 export declare const TailleCreationUpdateSchema: z.ZodObject<{
     nom: z.ZodOptional<z.ZodString>;
     prix: z.ZodOptional<z.ZodNumber>;
+    image: z.ZodOptional<z.ZodString>;
     maxFruits: z.ZodOptional<z.ZodNumber>;
     maxSauces: z.ZodOptional<z.ZodNumber>;
     cerealesAutorise: z.ZodOptional<z.ZodBoolean>;

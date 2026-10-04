@@ -7,6 +7,7 @@ import avatarToastService from '../services/avatarToast.service.js';
 import heroService from '../services/hero.service.js';
 import catalogService from '../services/catalog.service.js';
 import navigationService from '../services/navigation.service.js';
+import { logger } from '../config/logger.js';
 class SiteController {
     // Récupérer les informations de branding
     async getBranding(req, res, next) {
@@ -47,7 +48,7 @@ class SiteController {
     async getAvatarToast(req, res, next) {
         try {
             const avatarToast = await avatarToastService.getAvatarToast();
-            console.log('Avatar toast envoyé:', avatarToast);
+            logger.info({ donnees: avatarToast }, 'Avatar toast envoyé:');
             res.status(StatusCodes.OK).json(jsonResponse({
                 status: 'success',
                 message: 'Avatar toast récupéré avec succès',
@@ -55,7 +56,7 @@ class SiteController {
             }));
         }
         catch (error) {
-            console.error('Erreur getAvatarToast:', error);
+            logger.error({ err: error }, 'Erreur getAvatarToast:');
             next(error);
         }
     }

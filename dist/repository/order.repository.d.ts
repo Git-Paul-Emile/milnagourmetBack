@@ -41,6 +41,8 @@ interface CreateOrderData {
     utilisateurId?: number;
     nomClient: string;
     telephoneClient: string;
+    /** Email de contact saisi à la commande : sert au repli des notifications. */
+    emailClient?: string | null;
     montantTotal: number;
     fraisLivraison?: number;
     notes?: string;

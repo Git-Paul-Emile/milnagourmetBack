@@ -32,8 +32,7 @@ export function gabaritEmail(options: {
           <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;">
             <tr>
               <td style="background-color:#7a3e1d;padding:20px 24px;">
-                <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.5px;">Milna Gourmet</span>
-                <span style="color:#f0d9c4;font-size:13px;display:block;margin-top:2px;">Le Salon du Yaourt — Libreville</span>
+                <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.5px;">Milna Gourmet Salon du Yaourt</span>
               </td>
             </tr>
             <tr>

@@ -2,9 +2,10 @@ import multer from 'multer';
 import path from 'path';
 import { jsonResponse } from '../utils/index.js';
 import { StatusCodes } from 'http-status-codes';
-import { PrismaClient } from '@prisma/client';
 import cloudinary, { CLOUDINARY_ROOT_FOLDER, sanitizeFileBaseName, uploadBufferToCloudinary } from '../config/cloudinary.js';
-const prisma = new PrismaClient();
+import { prisma } from '../config/database.js';
+// Client Prisma partagé : instancier un second client ouvrirait un
+// pool de connexions supplémentaire, épuisant le quota PostgreSQL.
 // Dossiers Cloudinary (équivalents des anciens dossiers locaux uploads/*)
 const FOLDERS = {
     produits: 'produits',
@@ -16,6 +17,8 @@ const FOLDERS = {
     sauces: 'sauces',
     cereales: 'cereales',
     avatarToast: 'avatarToast',
+    serviceComponents: 'service-components',
+    serviceCovers: 'service-covers',
 };
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -123,6 +126,8 @@ class UploadController {
     uploadSauceImage = this.handleUpload(FOLDERS.sauces, 'Image de sauce uploadée avec succès');
     uploadCerealeImage = this.handleUpload(FOLDERS.cereales, 'Image de céréale uploadée avec succès');
     uploadAvatarToastImage = this.handleUpload(FOLDERS.avatarToast, "Image d'avatar pour les toasts uploadée avec succès");
+    uploadServiceComponentImage = this.handleUpload(FOLDERS.serviceComponents, "Image d'élément de service uploadée avec succès");
+    uploadServiceCoverImage = this.handleUpload(FOLDERS.serviceCovers, 'Image de couverture de service uploadée avec succès');
     // Récupérer les images utilisées
     getUsedImages = async (req, res, next) => {
         try {

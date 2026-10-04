@@ -23,7 +23,7 @@ import type {
  * Orchestrateur des notifications.
  *
  * Responsabilités :
- *   1. choisir le canal disponible (WhatsApp prioritaire, email en repli) ;
+ *   1. choisir le canal disponible ;
  *   2. réessayer en cas d'échec transitoire, avec attente croissante ;
  *   3. tracer le résultat pour qu'aucun échec ne reste invisible.
  *
@@ -34,6 +34,9 @@ import type {
  * `false` et tout part automatiquement par email. Le jour où WhatsApp est
  * activé, il suffit de renseigner les variables d'environnement : aucun
  * code ne change.
+ *
+ * Exception metier : les nouvelles commandes vendeur partent uniquement
+ * par email, pour garder une boite de traitement centrale.
  */
 
 const NOMBRE_TENTATIVES = 3;
@@ -41,6 +44,7 @@ const DELAI_INITIAL_MS = 500;
 
 /** Canaux par ordre de préférence. */
 const CANAUX: readonly CanalEnvoi[] = [whatsappChannel, emailChannel];
+const CANAUX_NOUVELLE_COMMANDE_VENDEUR: readonly CanalEnvoi[] = [emailChannel];
 
 /** Attente passive, utilisée entre deux tentatives. */
 const attendre = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -58,7 +62,17 @@ export class NotificationService {
     canal: CanalEnvoi;
     adresse: string;
   } | null {
-    for (const canal of CANAUX) {
+    return this.choisirCanalDisponible(destinataires, CANAUX);
+  }
+
+  private static choisirCanalDisponible(
+    destinataires: DestinatairesNotification,
+    canaux: readonly CanalEnvoi[]
+  ): {
+    canal: CanalEnvoi;
+    adresse: string;
+  } | null {
+    for (const canal of canaux) {
       if (!canal.estConfigure()) continue;
       const adresse = canal.resoudreDestinataire(destinataires);
       if (adresse) return { canal, adresse };
@@ -83,7 +97,16 @@ export class NotificationService {
     contenu: ContenuNotification,
     contexte: Record<string, unknown> = {}
   ): Promise<ResultatNotification> {
-    const selection = this.choisirCanal(destinataires);
+    return this.envoyerAvecCanaux(destinataires, contenu, contexte, CANAUX);
+  }
+
+  private static async envoyerAvecCanaux(
+    destinataires: DestinatairesNotification,
+    contenu: ContenuNotification,
+    contexte: Record<string, unknown>,
+    canaux: readonly CanalEnvoi[]
+  ): Promise<ResultatNotification> {
+    const selection = this.choisirCanalDisponible(destinataires, canaux);
 
     if (!selection) {
       const erreur =
@@ -146,13 +169,13 @@ export class NotificationService {
   ): Promise<ResultatNotification> {
     const contenu = gabaritNouvelleCommande(commande);
 
-    const resultat = await this.envoyer(
+    const resultat = await this.envoyerAvecCanaux(
       {
-        telephone: env.VENDOR_WHATSAPP_NUMBER,
         email: env.VENDOR_EMAIL,
       },
       contenu,
-      { commandeId: commande.id, numeroCommande: commande.numeroCommande }
+      { commandeId: commande.id, numeroCommande: commande.numeroCommande },
+      CANAUX_NOUVELLE_COMMANDE_VENDEUR
     );
 
     await this.tracerResultat(commande.id, resultat);

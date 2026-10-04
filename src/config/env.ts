@@ -6,6 +6,22 @@ import path from 'path';
 // `quiet` supprime la bannière du chargeur, qui pollue la sortie des tests.
 dotenv.config({ path: path.join(process.cwd(), '.env'), quiet: true });
 
+const DEFAULT_VENDOR_EMAIL = 'business.libreville23@gmail.com';
+
+function optionalNonPlaceholderString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === 'your_resend_api_key') return undefined;
+  return trimmed;
+}
+
+function optionalVendorEmail(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === 'vendor@example.com') return undefined;
+  return trimmed;
+}
+
 const envSchema = z.object({
   // Server
   PORT: z.string().default('3000').transform(Number),
@@ -46,15 +62,21 @@ const envSchema = z.object({
   // Canal par défaut tant que WhatsApp Business n'est pas activé côté
   // Telnyx. C'est aussi le seul canal utilisable pour la réinitialisation
   // de mot de passe.
-  RESEND_API_KEY: z.string().optional(),
+  RESEND_API_KEY: z.preprocess(
+    optionalNonPlaceholderString,
+    z
+      .string()
+      .regex(/^re_/, 'RESEND_API_KEY doit etre une vraie cle Resend et commencer par "re_".')
+      .optional()
+  ),
   // Expéditeur : doit appartenir à un domaine vérifié dans Resend.
   MAIL_FROM: z.string().default('Milna Gourmet <contact@milnagourmet.com>'),
   // Boîte du vendeur qui reçoit les nouvelles commandes.
   // Chaîne vide traitée comme absente : certains hébergeurs (Render)
   // conservent une variable "" plutôt que de la supprimer.
   VENDOR_EMAIL: z.preprocess(
-    (v) => (v === '' ? undefined : v),
-    z.string().email().optional()
+    optionalVendorEmail,
+    z.string().email().default(DEFAULT_VENDOR_EMAIL)
   ),
 
   // ------------------------------------------------------------------

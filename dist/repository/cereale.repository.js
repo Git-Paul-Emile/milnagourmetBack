@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { logger } from '../config/logger.js';
 class CerealeRepository {
     async create(data) {
         try {
@@ -6,7 +7,7 @@ class CerealeRepository {
             return cereale;
         }
         catch (error) {
-            console.error('Erreur lors de la création de la céréale:', error);
+            logger.error({ err: error }, 'Erreur lors de la création de la céréale:');
             throw new Error('Impossible de créer la céréale');
         }
     }
@@ -19,7 +20,7 @@ class CerealeRepository {
             return cereales;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération des céréales:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des céréales:');
             throw new Error('Impossible de récupérer les céréales');
         }
     }
@@ -31,7 +32,7 @@ class CerealeRepository {
             return cereale;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération de la céréale:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de la céréale:');
             throw new Error('Impossible de récupérer la céréale');
         }
     }
@@ -44,7 +45,7 @@ class CerealeRepository {
             return cereale;
         }
         catch (error) {
-            console.error('Erreur lors de la mise à jour de la céréale:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour de la céréale:');
             throw new Error('Impossible de mettre à jour la céréale');
         }
     }
@@ -56,7 +57,7 @@ class CerealeRepository {
             return cereale;
         }
         catch (error) {
-            console.error('Erreur lors de la suppression de la céréale:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression de la céréale:');
             throw new Error('Impossible de supprimer la céréale');
         }
     }

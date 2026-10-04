@@ -1,6 +1,7 @@
 import userRepository from '../repository/user.repository.js';
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
+import { logger } from '../config/logger.js';
 class UserService {
     async getAllUsers(options = {}) {
         try {
@@ -10,7 +11,7 @@ class UserService {
             return { items, total };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération des utilisateurs:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération des utilisateurs:');
             throw error;
         }
     }
@@ -60,7 +61,7 @@ class UserService {
             };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la mise à jour de l’utilisateur:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour de l’utilisateur:');
             throw error;
         }
     }
@@ -69,7 +70,7 @@ class UserService {
             await userRepository.delete(id);
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la suppression de l’utilisateur:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la suppression de l’utilisateur:');
             throw error;
         }
     }

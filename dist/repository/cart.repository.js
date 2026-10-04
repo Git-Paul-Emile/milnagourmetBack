@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { logger } from '../config/logger.js';
+import { prisma } from '../config/database.js';
 class CartRepository {
     prisma = prisma;
     // Créer un nouveau panier pour un utilisateur
@@ -164,7 +164,7 @@ class CartRepository {
                     where: { id: guestItem.customCreation.size.id }
                 });
                 if (!taille || !taille.active) {
-                    console.warn(`Taille de création invalide dans le panier guest, ignorée: ${guestItem.name}`);
+                    logger.warn(`Taille de création invalide dans le panier guest, ignorée: ${guestItem.name}`);
                     continue;
                 }
                 await this.addCreation({
@@ -186,7 +186,7 @@ class CartRepository {
                 }
             });
             if (!produit) {
-                console.warn(`Produit non trouvé ou indisponible dans le panier guest: ${guestItem.name}`);
+                logger.warn(`Produit non trouvé ou indisponible dans le panier guest: ${guestItem.name}`);
                 continue;
             }
             // Chercher si cet élément existe déjà dans le panier utilisateur

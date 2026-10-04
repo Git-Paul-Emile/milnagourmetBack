@@ -1,6 +1,7 @@
 import deliveryPersonRepository from '../repository/deliveryPerson.repository.js';
 import { AppError } from '../utils/AppError.js';
 import { StatusCodes } from 'http-status-codes';
+import { logger } from '../config/logger.js';
 class DeliveryPersonService {
     async getAllDeliveryPersons() {
         try {
@@ -22,7 +23,7 @@ class DeliveryPersonService {
             }));
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération des livreurs:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération des livreurs:');
             throw error;
         }
     }
@@ -42,7 +43,7 @@ class DeliveryPersonService {
             };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération du livreur:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération du livreur:');
             throw error;
         }
     }
@@ -63,7 +64,7 @@ class DeliveryPersonService {
             };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la création du livreur:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la création du livreur:');
             throw error;
         }
     }
@@ -85,7 +86,7 @@ class DeliveryPersonService {
             };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la mise à jour du livreur:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour du livreur:');
             throw error;
         }
     }
@@ -95,7 +96,7 @@ class DeliveryPersonService {
             return { success: true };
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la suppression du livreur:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la suppression du livreur:');
             throw error;
         }
     }

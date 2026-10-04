@@ -1,8 +1,23 @@
 import type { Utilisateur } from '@prisma/client';
-import type { LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
+import type { RegisterInput, LoginInput, UpdateProfileInput } from '../validator/auth.schema.js';
 declare class AuthService {
     private userRepository;
-    register(data: unknown): Promise<{
+    /**
+     * Inscription d'un nouvel utilisateur.
+     *
+     * ATTENTION — VALIDATION UNIQUE
+     * Les données arrivent DÉJÀ validées et transformées par le middleware
+     * `validateResource(registerSchema)` monté sur la route. Il ne faut
+     * surtout pas revalider ici : `zoneLivraisonId` a été converti de
+     * `string` en `number` par le schéma, et une seconde passe échouerait
+     * systématiquement avec « expected string, received number » — c'est
+     * exactement le bug que ce commentaire prévient.
+     *
+     * Règle générale : un schéma qui transforme ses données ne peut pas
+     * être appliqué deux fois. La validation appartient à la frontière
+     * HTTP, pas au service.
+     */
+    register(data: RegisterInput): Promise<{
         user: Utilisateur;
         accessToken: string;
         refreshToken: string;

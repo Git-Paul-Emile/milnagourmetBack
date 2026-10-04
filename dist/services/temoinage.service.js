@@ -1,4 +1,5 @@
 import temoinageRepository from '../repository/temoinage.repository.js';
+import { logger } from '../config/logger.js';
 class TemoinageService {
     temoinageRepository = temoinageRepository;
     async getAllTestimonials(includeInactive = false) {
@@ -19,7 +20,7 @@ class TemoinageService {
             }));
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la récupération des témoignages:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la récupération des témoignages:');
             throw error;
         }
     }
@@ -37,7 +38,7 @@ class TemoinageService {
             return testimonial;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la création du témoignage:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la création du témoignage:');
             throw error;
         }
     }
@@ -60,7 +61,7 @@ class TemoinageService {
             return testimonial;
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la mise à jour du témoignage:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la mise à jour du témoignage:');
             throw error;
         }
     }
@@ -69,7 +70,7 @@ class TemoinageService {
             await this.temoinageRepository.delete(id);
         }
         catch (error) {
-            console.error('Erreur dans le service lors de la suppression du témoignage:', error);
+            logger.error({ err: error }, 'Erreur dans le service lors de la suppression du témoignage:');
             throw error;
         }
     }

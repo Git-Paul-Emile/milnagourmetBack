@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { logger } from '../config/logger.js';
 class CategorieRepository {
     async create(data) {
         try {
@@ -6,7 +7,7 @@ class CategorieRepository {
             return categorie;
         }
         catch (error) {
-            console.error('Erreur lors de la création de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur lors de la création de la catégorie:');
             throw new Error('Impossible de créer la catégorie');
         }
     }
@@ -18,7 +19,7 @@ class CategorieRepository {
             return categories;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération des catégories:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération des catégories:');
             throw new Error('Impossible de récupérer les catégories');
         }
     }
@@ -30,7 +31,7 @@ class CategorieRepository {
             return categorie;
         }
         catch (error) {
-            console.error('Erreur lors de la récupération de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur lors de la récupération de la catégorie:');
             throw new Error('Impossible de récupérer la catégorie');
         }
     }
@@ -43,7 +44,7 @@ class CategorieRepository {
             return categorie;
         }
         catch (error) {
-            console.error('Erreur lors de la mise à jour de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur lors de la mise à jour de la catégorie:');
             throw new Error('Impossible de mettre à jour la catégorie');
         }
     }
@@ -55,7 +56,7 @@ class CategorieRepository {
             return categorie;
         }
         catch (error) {
-            console.error('Erreur lors de la suppression de la catégorie:', error);
+            logger.error({ err: error }, 'Erreur lors de la suppression de la catégorie:');
             throw new Error('Impossible de supprimer la catégorie');
         }
     }

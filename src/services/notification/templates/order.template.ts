@@ -1,6 +1,7 @@
 import type { CommandeWithRelations } from '../../../repository/order.repository.js';
 import type { ContenuNotification } from '../channel.types.js';
 import { gabaritEmail, paragraphe, blocPreformate } from './layout.js';
+import { echapperHtml } from '../email.channel.js';
 
 /**
  * Gabarits liés aux commandes.
@@ -12,6 +13,30 @@ import { gabaritEmail, paragraphe, blocPreformate } from './layout.js';
  */
 
 /** Formate le détail d'une commande en texte brut, utilisable partout. */
+function normaliserNumeroWhatsapp(telephone: string): string | null {
+  const trimmed = telephone.trim();
+  if (!trimmed) return null;
+
+  let digits = trimmed.replace(/\D/g, '');
+  if (!digits) return null;
+
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  } else if (!trimmed.startsWith('+') && digits.startsWith('0')) {
+    digits = `241${digits}`;
+  }
+
+  return digits;
+}
+
+function paragrapheTelephoneWhatsapp(telephone: string): string {
+  const numeroWhatsapp = normaliserNumeroWhatsapp(telephone);
+  if (!numeroWhatsapp) return paragraphe(`Téléphone : ${telephone}`);
+
+  const url = `https://wa.me/${numeroWhatsapp}`;
+  return `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">Téléphone : <a href="${echapperHtml(url)}" style="color:#0D7F87;text-decoration:underline;">${echapperHtml(telephone)}</a></p>`;
+}
+
 export function formaterDetailCommande(commande: CommandeWithRelations): string {
   let details = '';
 
@@ -32,16 +57,16 @@ export function formaterDetailCommande(commande: CommandeWithRelations): string 
       const sauces = creation.sauces?.map((s) => s.sauce?.nom).filter(Boolean) ?? [];
       const cereales = creation.cereales?.map((c) => c.cereale?.nom).filter(Boolean) ?? [];
 
-      if (fruits.length > 0) details += `  • Fruits : ${fruits.join(', ')}\n`;
-      if (sauces.length > 0) details += `  • Sauces : ${sauces.join(', ')}\n`;
-      if (cereales.length > 0) details += `  • Céréales : ${cereales.join(', ')}\n`;
+      if (fruits.length > 0) details += `  - Fruits : ${fruits.join(', ')}\n`;
+      if (sauces.length > 0) details += `  - Sauces : ${sauces.join(', ')}\n`;
+      if (cereales.length > 0) details += `  - Céréales : ${cereales.join(', ')}\n`;
       details += '\n';
     });
   }
 
   details += `\nFrais de livraison : ${commande.fraisLivraison} FCFA`;
   details += `\nMontant total : ${commande.montantTotal} FCFA`;
-  details += `\nRèglement : paiement à la livraison (aucun paiement en ligne)`;
+  details += `\nRèglement : paiement à la livraison`;
 
   return details;
 }
@@ -61,13 +86,13 @@ export function gabaritNouvelleCommande(commande: CommandeWithRelations): Conten
     titre: `Nouvelle commande ${commande.numeroCommande}`,
     corpsHtml:
       paragraphe(`Client : ${commande.nomClient}`) +
-      paragraphe(`Téléphone : ${commande.telephoneClient}`) +
+      paragrapheTelephoneWhatsapp(commande.telephoneClient) +
       blocPreformate(detail) +
-      paragraphe('À encaisser à la livraison. Aucun paiement en ligne n’a été effectué.'),
+      paragraphe('À encaisser à la livraison.'),
   });
 
   return {
-    sujet: `Nouvelle commande ${commande.numeroCommande} — ${commande.nomClient}`,
+    sujet: `Nouvelle commande ${commande.numeroCommande} - ${commande.nomClient}`,
     texte,
     html,
   };

@@ -15,10 +15,23 @@ import { creerPrismaMock, type PrismaMock } from '../../test/prismaMock.js';
  */
 
 const prismaMock: PrismaMock = creerPrismaMock();
+const { resendSendMock } = vi.hoisted(() => ({
+  resendSendMock: vi.fn(),
+}));
 
 vi.mock('../../config/database.js', () => ({
   prisma: prismaMock,
   connectToDatabase: vi.fn(),
+}));
+
+vi.mock('resend', () => ({
+  Resend: vi.fn(function ResendMock() {
+    return {
+      emails: {
+        send: resendSendMock,
+      },
+    };
+  }),
 }));
 
 /** Commande minimale suffisante pour les gabarits. */
@@ -51,9 +64,9 @@ async function chargerService() {
 describe('NotificationService — choix du canal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.RESEND_API_KEY;
-    delete process.env.TELNYX_API_KEY;
-    delete process.env.TELNYX_WHATSAPP_FROM;
+    process.env.RESEND_API_KEY = '';
+    process.env.TELNYX_API_KEY = '';
+    process.env.TELNYX_WHATSAPP_FROM = '';
   });
 
   it('ne choisit aucun canal quand rien n’est configuré', async () => {
@@ -68,7 +81,7 @@ describe('NotificationService — choix du canal', () => {
   });
 
   it('bascule sur l’email tant que WhatsApp n’est pas configuré', async () => {
-    process.env.RESEND_API_KEY = 'cle-de-test';
+    process.env.RESEND_API_KEY = 're_cle_de_test';
     const { NotificationService } = await chargerService();
 
     const choix = NotificationService.choisirCanal({
@@ -81,7 +94,7 @@ describe('NotificationService — choix du canal', () => {
   });
 
   it('privilégie WhatsApp dès qu’il est configuré', async () => {
-    process.env.RESEND_API_KEY = 'cle-de-test';
+    process.env.RESEND_API_KEY = 're_cle_de_test';
     process.env.TELNYX_API_KEY = 'cle-telnyx';
     process.env.TELNYX_WHATSAPP_FROM = '+241000000000';
     const { NotificationService } = await chargerService();
@@ -95,7 +108,7 @@ describe('NotificationService — choix du canal', () => {
   });
 
   it('retombe sur l’email si WhatsApp est configuré mais le destinataire n’a pas de téléphone', async () => {
-    process.env.RESEND_API_KEY = 'cle-de-test';
+    process.env.RESEND_API_KEY = 're_cle_de_test';
     process.env.TELNYX_API_KEY = 'cle-telnyx';
     process.env.TELNYX_WHATSAPP_FROM = '+241000000000';
     const { NotificationService } = await chargerService();
@@ -115,7 +128,7 @@ describe('NotificationService — reprise sur échec', () => {
     vi.useFakeTimers();
     process.env.TELNYX_API_KEY = 'cle-telnyx';
     process.env.TELNYX_WHATSAPP_FROM = '+241000000000';
-    delete process.env.RESEND_API_KEY;
+    process.env.RESEND_API_KEY = '';
   });
 
   afterEach(() => {
@@ -211,6 +224,8 @@ describe('NotificationService — traçabilité sur la commande', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    process.env.RESEND_API_KEY = 're_cle_de_test';
+    process.env.VENDOR_EMAIL = 'business.libreville23@gmail.com';
     process.env.TELNYX_API_KEY = 'cle-telnyx';
     process.env.TELNYX_WHATSAPP_FROM = '+241000000000';
     process.env.VENDOR_WHATSAPP_NUMBER = '+241066111111';
@@ -222,10 +237,9 @@ describe('NotificationService — traçabilité sur la commande', () => {
   });
 
   it('inscrit le succès de la notification sur la commande', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => '' })
-    );
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => '' });
+    vi.stubGlobal('fetch', fetchMock);
+    resendSendMock.mockResolvedValue({ error: null });
     prismaMock.commande.update.mockResolvedValue({});
 
     const { NotificationService } = await chargerService();
@@ -234,12 +248,18 @@ describe('NotificationService — traçabilité sur la commande', () => {
     await vi.runAllTimersAsync();
     await promesse;
 
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(resendSendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ['business.libreville23@gmail.com'],
+      })
+    );
     expect(prismaMock.commande.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 42 },
         data: expect.objectContaining({
           notificationEnvoyee: true,
-          notificationCanal: 'whatsapp',
+          notificationCanal: 'email',
           notificationTentatives: 1,
           notificationErreur: null,
         }),
@@ -252,6 +272,9 @@ describe('NotificationService — traçabilité sur la commande', () => {
       'fetch',
       vi.fn().mockResolvedValue({ ok: false, status: 401, text: async () => 'clé invalide' })
     );
+    resendSendMock.mockResolvedValue({
+      error: { name: 'Unauthorized', message: 'cle invalide' },
+    });
     prismaMock.commande.update.mockResolvedValue({});
 
     const { NotificationService } = await chargerService();
@@ -265,7 +288,7 @@ describe('NotificationService — traçabilité sur la commande', () => {
     };
 
     expect(appel.data.notificationEnvoyee).toBe(false);
-    expect(appel.data.notificationErreur).toContain('401');
+    expect(appel.data.notificationErreur).toContain('cle invalide');
   });
 
   it('ne propage pas une panne d’écriture en base', async () => {
@@ -273,6 +296,7 @@ describe('NotificationService — traçabilité sur la commande', () => {
       'fetch',
       vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => '' })
     );
+    resendSendMock.mockResolvedValue({ error: null });
     prismaMock.commande.update.mockRejectedValue(new Error('base indisponible'));
 
     const { NotificationService } = await chargerService();

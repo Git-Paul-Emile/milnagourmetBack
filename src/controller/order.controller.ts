@@ -19,7 +19,7 @@ interface FrontendOrderItem {
   price: number;
   quantity: number;
   image?: string;
-  product?: { id: string; category?: string } | null;
+  product?: { id: string | number; category?: string } | null;
   customCreation?: {
     size?: { id: number; nom: string };
     selectedFruits?: string[];
@@ -31,7 +31,7 @@ interface FrontendOrderItem {
 interface FrontendOrderData {
   id: string;
   customer?: {
-    id: string;
+    id?: string;
     name: string;
     phone: string;
     email: string;
@@ -171,8 +171,14 @@ class OrderController {
         Number.isInteger(identifiantBrut) && identifiantBrut > 0 ? identifiantBrut : undefined;
 
       // Séparer les produits et les créations personnalisées
-      const products = orderData.items.filter(item => item.product && !item.id.startsWith('creation'));
-      const creations = orderData.items.filter(item => item.customCreation || item.id.startsWith('creation'));
+      const isCreationItem = (item: FrontendOrderItem) =>
+        Boolean(item.customCreation) || item.id.startsWith('creation');
+      const parsePositiveId = (value: string | number | undefined | null) => {
+        const parsed = typeof value === 'number' ? value : parseInt(value || '', 10);
+        return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+      };
+      const products = orderData.items.filter(item => !isCreationItem(item));
+      const creations = orderData.items.filter(isCreationItem);
 
       if (products.length === 0 && creations.length === 0) {
         throw new AppError('La commande ne contient aucun article', StatusCodes.BAD_REQUEST);
@@ -181,7 +187,10 @@ class OrderController {
       // Résoudre le prix officiel de chaque produit depuis la base (ne jamais faire confiance au prix envoyé par le client)
       let montantProduits = 0;
       const resolvedElements = await Promise.all(products.map(async (item) => {
-        const produitId = parseInt(item.id);
+        const produitId = parsePositiveId(item.product?.id ?? item.id);
+        if (!produitId) {
+          throw new AppError(`Produit invalide : ${item.name}`, StatusCodes.BAD_REQUEST);
+        }
         const produit = await prisma.produit.findUnique({ where: { id: produitId } });
         if (!produit || !produit.disponible) {
           throw new AppError(`Produit indisponible : ${item.name}`, StatusCodes.BAD_REQUEST);

@@ -42,6 +42,7 @@ declare class ConfigService {
             nom: string;
             active: boolean;
             id: number;
+            image: string | null;
             ordreAffichage: number;
             prix: number;
             maxFruits: number;
@@ -119,6 +120,7 @@ declare class ConfigService {
                 nom: string;
                 active: boolean;
                 id: number;
+                image: string | null;
                 ordreAffichage: number;
                 prix: number;
                 maxFruits: number;

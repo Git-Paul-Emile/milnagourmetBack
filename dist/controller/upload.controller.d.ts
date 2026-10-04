@@ -11,6 +11,8 @@ declare class UploadController {
     uploadSauceImage: (req: Request, res: Response, next: NextFunction) => void;
     uploadCerealeImage: (req: Request, res: Response, next: NextFunction) => void;
     uploadAvatarToastImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadServiceComponentImage: (req: Request, res: Response, next: NextFunction) => void;
+    uploadServiceCoverImage: (req: Request, res: Response, next: NextFunction) => void;
     getUsedImages: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     deleteImage: (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
     listImages: (req: Request, res: Response, next: NextFunction) => Promise<void>;

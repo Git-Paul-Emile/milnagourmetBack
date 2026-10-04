@@ -35,7 +35,18 @@ class CartController {
             description: element.produit?.description || '',
             price: element.prix,
             quantity: element.quantite,
-            image: element.produit?.image || ''
+            image: element.produit?.image || '',
+            product: element.produit ? {
+              id: element.produit.id.toString(),
+              name: element.produit.nom,
+              category: String(element.produit.categorie).toLowerCase(),
+              categoryId: element.produit.categorieId?.toString(),
+              price: element.produit.prix,
+              description: element.produit.description || '',
+              image: element.produit.image || '',
+              available: element.produit.disponible,
+              archived: false
+            } : undefined
           })),
           // Créations personnalisées
           ...(cart.creations ?? []).map(creation => ({
