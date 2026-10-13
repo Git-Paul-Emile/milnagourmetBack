@@ -1,40 +1,27 @@
+import React from 'react';
+import { render } from '@react-email/components';
 import type { CommandeWithRelations } from '../../../repository/order.repository.js';
 import type { ContenuNotification } from '../channel.types.js';
-import { gabaritEmail, paragraphe, blocPreformate } from './layout.js';
-import { echapperHtml } from '../email.channel.js';
+import { gabaritEmail, paragraphe } from './layout.js';
+import { env } from '../../../config/env.js';
+import {
+  NewOrderEmail,
+  calculerSousTotal,
+  formaterMontantFcfa,
+  retirerIndicatif241,
+} from './NewOrderEmail.js';
 
-/**
- * Gabarits liés aux commandes.
- *
- * Un seul endroit produit le contenu, quel que soit le canal : le texte
- * WhatsApp et l'email disent donc toujours exactement la même chose
- * (principe DRY). Ajouter une information à la commande ne demande qu'une
- * seule modification.
- */
+export {
+  NewOrderEmail,
+  calculerSousTotal,
+  formaterMontantFcfa,
+  retirerIndicatif241,
+};
 
-/** Formate le détail d'une commande en texte brut, utilisable partout. */
-function normaliserNumeroWhatsapp(telephone: string): string | null {
-  const trimmed = telephone.trim();
-  if (!trimmed) return null;
-
-  let digits = trimmed.replace(/\D/g, '');
-  if (!digits) return null;
-
-  if (digits.startsWith('00')) {
-    digits = digits.slice(2);
-  } else if (!trimmed.startsWith('+') && digits.startsWith('0')) {
-    digits = `241${digits}`;
-  }
-
-  return digits;
-}
-
-function paragrapheTelephoneWhatsapp(telephone: string): string {
-  const numeroWhatsapp = normaliserNumeroWhatsapp(telephone);
-  if (!numeroWhatsapp) return paragraphe(`Téléphone : ${telephone}`);
-
-  const url = `https://wa.me/${numeroWhatsapp}`;
-  return `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">Téléphone : <a href="${echapperHtml(url)}" style="color:#0D7F87;text-decoration:underline;">${echapperHtml(telephone)}</a></p>`;
+/** Formate le numéro WhatsApp en retirant l'indicatif 241 pour le lien */
+export function normaliserNumeroWhatsappSans241(telephone: string): string | null {
+  const digits = retirerIndicatif241(telephone);
+  return digits || null;
 }
 
 export function formaterDetailCommande(commande: CommandeWithRelations): string {
@@ -64,6 +51,8 @@ export function formaterDetailCommande(commande: CommandeWithRelations): string 
     });
   }
 
+  const sousTotal = calculerSousTotal(commande);
+  details += `\nSous-total : ${sousTotal} FCFA`;
   details += `\nFrais de livraison : ${commande.fraisLivraison} FCFA`;
   details += `\nMontant total : ${commande.montantTotal} FCFA`;
   details += `\nRèglement : paiement à la livraison`;
@@ -71,8 +60,10 @@ export function formaterDetailCommande(commande: CommandeWithRelations): string 
   return details;
 }
 
-/** Notification adressée au vendeur à la réception d'une nouvelle commande. */
-export function gabaritNouvelleCommande(commande: CommandeWithRelations): ContenuNotification {
+/** Notification adressée au vendeur à la réception d'une nouvelle commande via React Email. */
+export async function gabaritNouvelleCommande(
+  commande: CommandeWithRelations
+): Promise<ContenuNotification> {
   const detail = formaterDetailCommande(commande);
 
   const texte =
@@ -82,14 +73,12 @@ export function gabaritNouvelleCommande(commande: CommandeWithRelations): Conten
     `${detail}\n\n` +
     `À encaisser à la livraison. Merci de traiter cette commande rapidement.`;
 
-  const html = gabaritEmail({
-    titre: `Nouvelle commande ${commande.numeroCommande}`,
-    corpsHtml:
-      paragraphe(`Client : ${commande.nomClient}`) +
-      paragrapheTelephoneWhatsapp(commande.telephoneClient) +
-      blocPreformate(detail) +
-      paragraphe('À encaisser à la livraison.'),
-  });
+  const html = await render(
+    React.createElement(NewOrderEmail, {
+      commande,
+      logoUrl: `${env.PUBLIC_APP_URL}/images/logo.png`,
+    })
+  );
 
   return {
     sujet: `Nouvelle commande ${commande.numeroCommande} - ${commande.nomClient}`,

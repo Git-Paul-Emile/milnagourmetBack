@@ -167,7 +167,7 @@ export class NotificationService {
   static async notifierVendeurNouvelleCommande(
     commande: CommandeWithRelations
   ): Promise<ResultatNotification> {
-    const contenu = gabaritNouvelleCommande(commande);
+    const contenu = await gabaritNouvelleCommande(commande);
 
     const resultat = await this.envoyerAvecCanaux(
       {

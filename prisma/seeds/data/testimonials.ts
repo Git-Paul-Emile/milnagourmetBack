@@ -8,7 +8,7 @@ export const testimonialsData = [
     "name": "Jolie",
     "location": "Libreville",
     "rating": 5,
-    "comment": "Les meilleurs yaourts de Dakar ! La qualité est exceptionnelle et les saveurs sont uniques. Je recommande vivement Milna Gourmet.",
+    "comment": "Les meilleurs yaourts de Libreville ! La qualité est exceptionnelle et les saveurs sont uniques. Je recommande vivement Milna Gourmet.",
     "avatar": DEFAULT_AVATAR,
     "date": "2024-01-15"
   },

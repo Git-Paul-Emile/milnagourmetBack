@@ -49,7 +49,7 @@ export const productsData = [
     "name": "Gourmet Bissap",
     "category": "liquide",
     "price": 2500,
-    "description": "Yaourt liquide au bissap (hibiscus), une fusion unique entre tradition sénégalaise et gourmandise moderne.",
+    "description": "Yaourt liquide au bissap (hibiscus), une fusion unique entre tradition gabonaise et gourmandise moderne.",
     "image": YOGURT_BISSAP_IMAGE,
     "available": true,
     "archived": false
