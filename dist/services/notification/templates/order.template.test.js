@@ -63,19 +63,24 @@ describe('formaterDetailCommande', () => {
     });
 });
 describe('gabaritNouvelleCommande', () => {
-    it('produit un sujet, un texte et un HTML cohérents', () => {
-        const contenu = gabaritNouvelleCommande(commandeComplete);
+    it('produit un sujet, un texte et un HTML cohérents avec sous-total et lien WhatsApp sans 241', async () => {
+        const contenu = await gabaritNouvelleCommande(commandeComplete);
         expect(contenu.sujet).toContain('CMD-0001');
         expect(contenu.sujet).toContain('Awa Nzeng');
         expect(contenu.texte).toContain('+241066000000');
-        expect(contenu.html).toContain('<!doctype html>');
+        expect(contenu.texte).toContain('Sous-total');
+        expect(contenu.html?.toLowerCase()).toContain('<!doctype html');
+        expect(contenu.html).toContain('Sous-total');
+        // Le lien WhatsApp doit avoir retiré le 241
+        expect(contenu.html).toContain('wa.me/066000000');
+        expect(contenu.html).not.toContain('wa.me/241');
     });
-    it("échappe le HTML des données saisies par l'utilisateur", () => {
+    it("échappe le HTML des données saisies par l'utilisateur", async () => {
         const malveillante = {
             ...commandeComplete,
             nomClient: '<script>alert(1)</script>',
         };
-        const contenu = gabaritNouvelleCommande(malveillante);
+        const contenu = await gabaritNouvelleCommande(malveillante);
         // La balise ne doit jamais se retrouver interprétable dans l'email.
         expect(contenu.html).not.toContain('<script>');
         expect(contenu.html).toContain('&lt;script&gt;');

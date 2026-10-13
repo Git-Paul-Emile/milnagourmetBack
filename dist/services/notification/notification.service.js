@@ -111,7 +111,7 @@ export class NotificationService {
      * renvoi. Sans cela, une panne du fournisseur reste invisible.
      */
     static async notifierVendeurNouvelleCommande(commande) {
-        const contenu = gabaritNouvelleCommande(commande);
+        const contenu = await gabaritNouvelleCommande(commande);
         const resultat = await this.envoyerAvecCanaux({
             email: env.VENDOR_EMAIL,
         }, contenu, { commandeId: commande.id, numeroCommande: commande.numeroCommande }, CANAUX_NOUVELLE_COMMANDE_VENDEUR);

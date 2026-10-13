@@ -1,13 +1,14 @@
-import { gabaritEmail, paragraphe, blocPreformate } from './layout.js';
-/**
- * Gabarits liés aux commandes.
- *
- * Un seul endroit produit le contenu, quel que soit le canal : le texte
- * WhatsApp et l'email disent donc toujours exactement la même chose
- * (principe DRY). Ajouter une information à la commande ne demande qu'une
- * seule modification.
- */
-/** Formate le détail d'une commande en texte brut, utilisable partout. */
+import React from 'react';
+import { render } from '@react-email/components';
+import { gabaritEmail, paragraphe } from './layout.js';
+import { env } from '../../../config/env.js';
+import { NewOrderEmail, calculerSousTotal, formaterMontantFcfa, retirerIndicatif241, } from './NewOrderEmail.js';
+export { NewOrderEmail, calculerSousTotal, formaterMontantFcfa, retirerIndicatif241, };
+/** Formate le numéro WhatsApp en retirant l'indicatif 241 pour le lien */
+export function normaliserNumeroWhatsappSans241(telephone) {
+    const digits = retirerIndicatif241(telephone);
+    return digits || null;
+}
 export function formaterDetailCommande(commande) {
     let details = '';
     if (commande.elements && commande.elements.length > 0) {
@@ -34,26 +35,25 @@ export function formaterDetailCommande(commande) {
             details += '\n';
         });
     }
+    const sousTotal = calculerSousTotal(commande);
+    details += `\nSous-total : ${sousTotal} FCFA`;
     details += `\nFrais de livraison : ${commande.fraisLivraison} FCFA`;
     details += `\nMontant total : ${commande.montantTotal} FCFA`;
     details += `\nRèglement : paiement à la livraison`;
     return details;
 }
-/** Notification adressée au vendeur à la réception d'une nouvelle commande. */
-export function gabaritNouvelleCommande(commande) {
+/** Notification adressée au vendeur à la réception d'une nouvelle commande via React Email. */
+export async function gabaritNouvelleCommande(commande) {
     const detail = formaterDetailCommande(commande);
     const texte = `🔔 Nouvelle commande ${commande.numeroCommande}\n\n` +
         `Client : ${commande.nomClient}\n` +
         `Téléphone : ${commande.telephoneClient}\n\n` +
         `${detail}\n\n` +
         `À encaisser à la livraison. Merci de traiter cette commande rapidement.`;
-    const html = gabaritEmail({
-        titre: `Nouvelle commande ${commande.numeroCommande}`,
-        corpsHtml: paragraphe(`Client : ${commande.nomClient}`) +
-            paragraphe(`Téléphone : ${commande.telephoneClient}`) +
-            blocPreformate(detail) +
-            paragraphe('À encaisser à la livraison.'),
-    });
+    const html = await render(React.createElement(NewOrderEmail, {
+        commande,
+        logoUrl: `${env.PUBLIC_APP_URL}/images/logo.png`,
+    }));
     return {
         sujet: `Nouvelle commande ${commande.numeroCommande} - ${commande.nomClient}`,
         texte,
