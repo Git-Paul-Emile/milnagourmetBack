@@ -50,7 +50,7 @@ class EmailChannel implements CanalEnvoi {
     // Resend ne lève pas d'exception sur erreur métier : il renvoie un
     // objet `error`. Sans ce contrôle, un échec passerait pour un succès.
     if (error) {
-      throw new Error(`Échec de l'envoi Resend : ${error.name} — ${error.message}`);
+      throw new Error(`Échec de l'envoi Resend : ${error.name} ${error.message}`);
     }
 
     logger.debug({ canal: this.nom, destinataire }, 'Email envoyé');

@@ -8,7 +8,13 @@ export async function seedCreationOptions(prisma: PrismaClient) {
   for (const size of creationSizesData) {
     const createdTaille = await prisma.tailleCreation.upsert({
       where: { nom: size.name },
-      update: { image: size.image },
+      update: {
+        prix: size.price,
+        image: size.image,
+        maxFruits: size.fruits,
+        maxSauces: size.sauces,
+        cerealesAutorise: size.cereales
+      },
       create: {
         nom: size.name,
         prix: size.price,

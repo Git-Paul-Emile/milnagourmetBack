@@ -7,7 +7,15 @@ const img = (basename: string) => cloudinaryUrl(`creation-options/${basename}`);
 
 export const creationSizesData = [
   {
-    "name": "moyen",
+    "name": "Mini gourmet création",
+    "price": 1500,
+    "fruits": 1,
+    "sauces": 1,
+    "cereales": true,
+    "image": img('taille_moyenne.png')
+  },
+  {
+    "name": "Moyen gourmet création",
     "price": 2500,
     "fruits": 1,
     "sauces": 1,
@@ -15,7 +23,7 @@ export const creationSizesData = [
     "image": img('taille_moyenne.png')
   },
   {
-    "name": "maxi",
+    "name": "Maxi Gourmet création",
     "price": 3500,
     "fruits": 2,
     "sauces": 2,
@@ -23,7 +31,15 @@ export const creationSizesData = [
     "image": img('taille_maxi.png')
   },
   {
-    "name": "Lot de 10 minis fruités",
+    "name": "Lot de 10 mini gourmets crémeux mixés",
+    "price": 4500,
+    "fruits": 1,
+    "sauces": 1,
+    "cereales": false,
+    "image": img('lot_de_10.png')
+  },
+  {
+    "name": "Lot de 10 mini gourmets crémeux fruités",
     "price": 6000,
     "fruits": 2,
     "sauces": 1,
