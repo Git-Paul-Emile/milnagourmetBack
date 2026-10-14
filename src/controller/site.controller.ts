@@ -261,13 +261,13 @@ class SiteController {
         rating: parseInt(rating),
         comment,
         avatar,
-        active: active ?? false
+        active: false // Toujours inactif à la création : validation requise par l'admin avant publication
       });
 
       res.status(StatusCodes.CREATED).json(
         jsonResponse({
           status: 'success',
-          message: 'Témoignage créé avec succès',
+          message: 'Témoignage reçu avec succès. Il sera publié après vérification par un administrateur.',
           data: testimonial
         })
       );

@@ -29,8 +29,7 @@ export const createTestimonialSchema = z.object({
   location: z.string().min(1, 'Le lieu est requis'),
   rating: z.coerce.number().int().min(1).max(5, 'La note doit être comprise entre 1 et 5'),
   comment: z.string().min(1, 'Le commentaire est requis').max(200, 'Le commentaire ne doit pas dépasser 200 caractères'),
-  avatar: z.string().optional(),
-  active: z.boolean().optional()
+  avatar: z.string().optional()
 });
 
 export const updateTestimonialSchema = z.object({

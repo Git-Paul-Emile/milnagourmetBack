@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import siteController from '../controller/site.controller.js';
-import { authenticateToken } from '../utils/auth.middleware.js';
 import { requireAdmin } from '../utils/admin.middleware.js';
 import validateResource from '../middleware/validateResource.js';
 import {
@@ -28,7 +27,7 @@ router.get('/social-media', siteController.getSocialMedia);
 router.put('/social-media', requireAdmin, validateResource(updateSocialMediaSchema), siteController.updateSocialMedia);
 router.get('/testimonials', siteController.getTestimonials);
 router.get('/testimonials/all', requireAdmin, siteController.getAllTestimonials);
-router.post('/testimonials', authenticateToken, validateResource(createTestimonialSchema), siteController.createTestimonial);
+router.post('/testimonials', validateResource(createTestimonialSchema), siteController.createTestimonial);
 router.put('/testimonials/:id', requireAdmin, validateResource(updateTestimonialSchema), siteController.updateTestimonial);
 router.delete('/testimonials/:id', requireAdmin, siteController.deleteTestimonial);
 router.get('/hero', siteController.getHero);
