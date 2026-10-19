@@ -26,6 +26,7 @@ import uploadRoute from "../routes/upload.route.js";
 import healthRoute from "../routes/health.route.js";
 import loyaltyRoute from "../routes/loyalty.route.js";
 import specialServiceRoute from "../routes/specialService.route.js";
+import pwaRoute from "../routes/pwa.route.js";
 
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from '../swagger.js';
@@ -154,6 +155,7 @@ app.use('/api/upload', uploadRoute);
 app.use('/api/health', healthRoute);
 app.use('/api/loyalty', loyaltyRoute);
 app.use('/api/services', specialServiceRoute);
+app.use('/api/pwa', pwaRoute);
 
 // Documentation Swagger : elle décrit l'intégralité de la surface d'API,
 // y compris les routes d'administration. En production elle est réservée

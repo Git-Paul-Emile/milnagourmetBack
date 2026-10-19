@@ -102,3 +102,17 @@ export const passwordResetLimiter = rateLimit({
   },
   message: reponse429('Trop de demandes de réinitialisation. Réessayez dans une heure.'),
 });
+
+/**
+ * Suivi des scans de QR code et des installations PWA.
+ * Endpoint public : un appareil n'envoie que deux événements au plus,
+ * 20 par heure et par IP couvrent une famille ou un point de vente partagé.
+ */
+export const pwaEventLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  limit: 20,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: desactiveEnTest,
+  message: reponse429('Trop de requêtes. Réessayez plus tard.'),
+});
