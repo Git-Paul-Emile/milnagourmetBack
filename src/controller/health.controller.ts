@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../config/database.js';
+import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { emailChannel } from '../services/notification/email.channel.js';
 import { whatsappChannel } from '../services/notification/whatsapp.channel.js';
@@ -25,6 +26,7 @@ export const healthCheck = async (req: Request, res: Response) => {
       notifications: {
         whatsapp: whatsappChannel.estConfigure(),
         email: emailChannel.estConfigure(),
+        domaineExpediteur: env.MAIL_FROM.match(/@([^>\s]+)/)?.[1] ?? null,
       },
       timestamp: new Date().toISOString(),
     });

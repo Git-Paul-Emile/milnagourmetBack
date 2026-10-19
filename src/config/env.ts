@@ -15,6 +15,14 @@ function optionalNonPlaceholderString(value: unknown): string | undefined {
   return trimmed;
 }
 
+// Render conserve parfois les guillemets ou espaces collés dans son interface :
+// Resend rejette alors l'expéditeur. On normalise avant validation.
+function optionalMailFrom(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const cleaned = value.trim().replace(/^["']|["']$/g, '').trim();
+  return cleaned || undefined;
+}
+
 function optionalVendorEmail(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
@@ -70,7 +78,10 @@ const envSchema = z.object({
       .optional()
   ),
   // Expéditeur : doit appartenir à un domaine vérifié dans Resend.
-  MAIL_FROM: z.string().default('Milna Gourmet <contact@milnagourmet.com>'),
+  MAIL_FROM: z.preprocess(
+    optionalMailFrom,
+    z.string().default('Milna Gourmet <contact@milnagourmet.com>')
+  ),
   // Boîte du vendeur qui reçoit les nouvelles commandes.
   // Chaîne vide traitée comme absente : certains hébergeurs (Render)
   // conservent une variable "" plutôt que de la supprimer.
