@@ -66,6 +66,18 @@ describe('formaterDetailCommande', () => {
     expect(detail).toContain('paiement à la livraison');
   });
 
+  it('signale la remise fidélité et les points utilisés', () => {
+    const avecRemise = {
+      ...commandeComplete,
+      montantTotal: 14500,
+      historiquePoints: [{ points: -500, montant: 500 }],
+    } as unknown as CommandeWithRelations;
+
+    const detail = formaterDetailCommande(avecRemise);
+    expect(detail).toContain('Remise fidélité (500 points utilisés) : -500 FCFA');
+    expect(formaterDetailCommande(commandeComplete)).not.toContain('Remise fidélité');
+  });
+
   it('reste lisible pour une commande sans aucun article', () => {
     const vide = {
       ...commandeComplete,
@@ -104,6 +116,20 @@ describe('gabaritNouvelleCommande', () => {
     // La balise ne doit jamais se retrouver interprétable dans l'email.
     expect(contenu.html).not.toContain('<script>');
     expect(contenu.html).toContain('&lt;script&gt;');
+  });
+});
+
+describe('gabaritNouvelleCommande — remise fidélité', () => {
+  it('affiche la remise dans le HTML envoyé au vendeur', async () => {
+    const { html } = await gabaritNouvelleCommande({
+      ...commandeComplete,
+      montantTotal: 14500,
+      historiquePoints: [{ points: -500, montant: 500 }],
+    } as unknown as CommandeWithRelations);
+
+    expect(html).toContain('Remise fidélité');
+    expect(html).toContain('500 points utilisés');
+    expect(html).toContain('remise fidélité déjà déduite du total');
   });
 });
 

@@ -29,7 +29,7 @@ class LoyaltyController {
             canUsePoints,
             progressPercentage,
             pointsToNextThreshold,
-            nextThresholdValue: LoyaltyService.pointsToCFA(100) // 1500 F
+            nextThresholdValue: LoyaltyService.pointsToCFA(LoyaltyService.MIN_POINTS_FOR_DISCOUNT)
           }
         })
       );

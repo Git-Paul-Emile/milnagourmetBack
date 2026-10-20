@@ -255,7 +255,9 @@ class OrderController {
       // Appliquer la remise fidélité si des points sont utilisés (utilisateur connecté uniquement, jamais pour un invité)
       let remise = 0;
       if (utilisateurId && orderData.pointsUsed && orderData.pointsUsed > 0) {
-        remise = await LoyaltyService.usePoints(utilisateurId, orderData.pointsUsed);
+        // Jamais plus de points que nécessaire : l'excédent serait perdu.
+        const pointsNecessaires = Math.ceil(LoyaltyService.cfaToPoints(montantAvantRemise));
+        remise = await LoyaltyService.usePoints(utilisateurId, Math.min(orderData.pointsUsed, pointsNecessaires));
       }
 
       const dbOrderData = {
@@ -275,6 +277,17 @@ class OrderController {
       };
 
       const order = await orderRepository.create(dbOrderData);
+
+      // Rattacher les points utilisés AVANT la notification : le mail
+      // vendeur affiche la remise fidélité à partir de cet historique.
+      if (utilisateurId && remise > 0) {
+        await LoyaltyService.updatePointsHistoryWithOrderId(
+          utilisateurId,
+          order.id,
+          LoyaltyService.cfaToPoints(remise)
+        );
+      }
+
       const fullOrder = await orderRepository.findById(order.id);
 
       // Notification du vendeur, volontairement asynchrone : une panne du
@@ -296,9 +309,6 @@ class OrderController {
         const cartService = (await import('../services/cart.service.js')).default;
         await cartService.clearCart(utilisateurId);
 
-        if (remise > 0) {
-          await LoyaltyService.updatePointsHistoryWithOrderId(utilisateurId, order.id, orderData.pointsUsed!);
-        }
 
         try {
           // Points gagnés sur le montant avant remise fidélité, pour éviter un effet cumulatif

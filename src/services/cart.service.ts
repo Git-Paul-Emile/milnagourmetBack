@@ -299,8 +299,12 @@ class CartService {
       });
 
       // Mettre à jour l'historique des points avec l'ID de commande
-      if (pointsToUse > 0) {
-        await LoyaltyService.updatePointsHistoryWithOrderId(utilisateurId, commande.id, pointsToUse);
+      if (discountAmount > 0) {
+        await LoyaltyService.updatePointsHistoryWithOrderId(
+          utilisateurId,
+          commande.id,
+          LoyaltyService.cfaToPoints(discountAmount)
+        );
       }
 
       // Récupérer la commande complète avec relations pour la notification

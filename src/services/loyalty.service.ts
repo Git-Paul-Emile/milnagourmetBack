@@ -11,29 +11,31 @@ export interface LoyaltyHistoryEntryDTO {
 }
 
 export class LoyaltyService {
-  private static readonly CFA_PER_POINT = 15; // 1 point = 15 F de remise
-  private static readonly POINTS_PER_CFA = 1 / this.CFA_PER_POINT; // Environ 0.0667 points par F
-  private static readonly MIN_POINTS_FOR_DISCOUNT = 100; // Seuil minimum
+  /** Gain : 1 point pour 15 F dépensés. */
+  private static readonly CFA_SPENT_PER_POINT_EARNED = 15;
+  /** Valeur : 1 point = 1 F de remise (100 points = 100 F). */
+  static readonly CFA_VALUE_PER_POINT = 1;
+  static readonly MIN_POINTS_FOR_DISCOUNT = 100; // Seuil minimum
 
   /**
    * Calcule les points gagnés pour un montant TTC
    */
   static calculatePoints(amountTTC: number): number {
-    return Math.round(amountTTC * this.POINTS_PER_CFA * 100) / 100;
+    return Math.round((amountTTC / this.CFA_SPENT_PER_POINT_EARNED) * 100) / 100;
   }
 
   /**
    * Convertit les points en valeur CFA
    */
   static pointsToCFA(points: number): number {
-    return points * this.CFA_PER_POINT;
+    return points * this.CFA_VALUE_PER_POINT;
   }
 
   /**
    * Convertit une valeur CFA en points
    */
   static cfaToPoints(amount: number): number {
-    return amount / this.CFA_PER_POINT;
+    return amount / this.CFA_VALUE_PER_POINT;
   }
 
   /**

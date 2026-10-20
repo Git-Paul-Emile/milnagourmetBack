@@ -26,6 +26,8 @@ export type CommandeWithRelations = Commande & {
     cereales: { cereale: { nom: string } }[];
   })[];
   livreur: Livreur | null;
+  /** Points utilisés sur la commande (chargés par findById pour le mail vendeur). */
+  historiquePoints?: { points: Prisma.Decimal; montant: Prisma.Decimal | null }[];
 }
 
 interface CreateOrderData {
@@ -229,7 +231,11 @@ class OrderRepository {
                     }
                   },
                   utilisateur: true,
-                  livreur: true
+                  livreur: true,
+                  historiquePoints: {
+                    where: { type: 'UTILISATION' },
+                    select: { points: true, montant: true }
+                  }
                 }
             });
             return order;

@@ -38,15 +38,17 @@ describe('LoyaltyService — conversions', () => {
     expect(LoyaltyService.calculatePoints(0)).toBe(0);
   });
 
-  it('convertit des points en francs', () => {
-    expect(LoyaltyService.pointsToCFA(100)).toBe(1500);
+  it('convertit des points en francs (1 point = 1 F)', () => {
+    expect(LoyaltyService.pointsToCFA(100)).toBe(100);
   });
 
-  it('les deux conversions sont réciproques', () => {
-    const montant = 3000;
-    const points = LoyaltyService.calculatePoints(montant);
+  it('les conversions points ↔ francs sont réciproques', () => {
+    expect(LoyaltyService.pointsToCFA(LoyaltyService.cfaToPoints(3000))).toBe(3000);
+  });
 
-    expect(LoyaltyService.pointsToCFA(points)).toBe(montant);
+  it('un achat rend une fraction de son montant, pas sa totalité', () => {
+    // 1500 F dépensés → 100 points → 100 F de remise
+    expect(LoyaltyService.pointsToCFA(LoyaltyService.calculatePoints(1500))).toBe(100);
   });
 });
 

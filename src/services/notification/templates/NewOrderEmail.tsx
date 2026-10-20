@@ -43,6 +43,20 @@ export function calculerSousTotal(commande: CommandeWithRelations): number {
 }
 
 /**
+ * Remise fidélité appliquée à la commande : points utilisés et montant
+ * déduit, d'après l'historique de points rattaché à la commande.
+ */
+export function calculerRemiseFidelite(commande: CommandeWithRelations): { points: number; montant: number } {
+  return (commande.historiquePoints ?? []).reduce(
+    (acc, ligne) => ({
+      points: acc.points + Math.abs(Number(ligne.points)),
+      montant: acc.montant + Number(ligne.montant ?? 0),
+    }),
+    { points: 0, montant: 0 }
+  );
+}
+
+/**
  * Retire l'indicatif +241, 00241 ou 241 du numéro de téléphone pour le lien WhatsApp.
  */
 export function retirerIndicatif241(telephone: string): string {
@@ -71,6 +85,7 @@ export const NewOrderEmail: React.FC<NewOrderEmailProps> = ({
   const sousTotal = calculerSousTotal(commande);
   const fraisLivraison = commande.fraisLivraison ?? 0;
   const montantTotal = commande.montantTotal ?? 0;
+  const remiseFidelite = calculerRemiseFidelite(commande);
   const whatsappLien = `https://wa.me/${retirerIndicatif241(commande.telephoneClient)}`;
 
   return (
@@ -185,6 +200,24 @@ export const NewOrderEmail: React.FC<NewOrderEmailProps> = ({
               </table>
             </div>
 
+            {/* Remise fidélité : déjà déduite du montant total */}
+            {remiseFidelite.montant > 0 && (
+              <div style={livraisonRowStyle}>
+                <table role="presentation" width="100%" cellPadding="0" cellSpacing="0">
+                  <tbody>
+                    <tr>
+                      <td style={livraisonLabelStyle}>
+                        {`Remise fidélité (${remiseFidelite.points} points utilisés)`}
+                      </td>
+                      <td style={remiseValeurStyle}>
+                        {`- ${formaterMontantFcfa(remiseFidelite.montant)}`}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {/* Montant total */}
             <div style={totalRowStyle}>
               <table role="presentation" width="100%" cellPadding="0" cellSpacing="0">
@@ -202,6 +235,7 @@ export const NewOrderEmail: React.FC<NewOrderEmailProps> = ({
             {/* Note de règlement */}
             <div style={reglementFooterStyle}>
               Règlement : paiement à la livraison
+              {remiseFidelite.montant > 0 && ' (remise fidélité déjà déduite du total)'}
             </div>
           </Section>
 
@@ -407,6 +441,11 @@ const livraisonValeurStyle: React.CSSProperties = {
   color: '#1A202C',
   textAlign: 'right',
   whiteSpace: 'nowrap',
+};
+
+const remiseValeurStyle: React.CSSProperties = {
+  ...livraisonValeurStyle,
+  color: '#2F855A',
 };
 
 const totalRowStyle: React.CSSProperties = {

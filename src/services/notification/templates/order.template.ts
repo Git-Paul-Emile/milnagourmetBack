@@ -6,6 +6,7 @@ import { gabaritEmail, paragraphe } from './layout.js';
 import { env } from '../../../config/env.js';
 import {
   NewOrderEmail,
+  calculerRemiseFidelite,
   calculerSousTotal,
   formaterMontantFcfa,
   retirerIndicatif241,
@@ -13,6 +14,7 @@ import {
 
 export {
   NewOrderEmail,
+  calculerRemiseFidelite,
   calculerSousTotal,
   formaterMontantFcfa,
   retirerIndicatif241,
@@ -54,6 +56,10 @@ export function formaterDetailCommande(commande: CommandeWithRelations): string 
   const sousTotal = calculerSousTotal(commande);
   details += `\nSous-total : ${sousTotal} FCFA`;
   details += `\nFrais de livraison : ${commande.fraisLivraison} FCFA`;
+  const remise = calculerRemiseFidelite(commande);
+  if (remise.montant > 0) {
+    details += `\nRemise fidélité (${remise.points} points utilisés) : -${remise.montant} FCFA`;
+  }
   details += `\nMontant total : ${commande.montantTotal} FCFA`;
   details += `\nRèglement : paiement à la livraison`;
 
